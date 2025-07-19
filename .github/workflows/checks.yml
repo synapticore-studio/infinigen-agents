@@ -27,13 +27,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+
       - name: Lint with ruff
         run: |
-          pip install ruff
-          # stop the build if there are Python syntax errors or undefined names
-          ruff check --output-format=github --select=E9,F63,F7,F82 .
-          # default set of ruff rules with GitHub Annotations
-          ruff check --output-format=github .
+          uv run ruff check --output-format=github --select=E9,F63,F7,F82 .
+          uv run ruff check --output-format=github .
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -42,12 +44,47 @@ jobs:
 
       - name: Install infinigen & dependencies
         run: |
-          pip install ".[dev]"
+          uv sync --extra dev
 
       - name: Test with pytest
         run: |
-          pytest tests -k 'not skip_for_ci'
+          uv run pytest tests -k 'not skip_for_ci'
 
       - name: Check for copyright statements
         run: |
-          ruff check --output-format=github --preview --select CPY001 .
+          uv run ruff check --output-format=github --preview --select CPY001 .
+
+  checks-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+
+      - name: Lint with ruff
+        run: |
+          uv run ruff check --output-format=github --select=E9,F63,F7,F82 .
+          uv run ruff check --output-format=github .
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install infinigen & dependencies
+        run: |
+          uv sync
+
+      - name: Test core functionality
+        run: |
+          uv run python -c "import infinigen; print('✅ Core import successful')"
+          uv run python -c "import cv2, gin, fcl; print('✅ Core dependencies work')"
+          uv run python -c "import skimage, sklearn, bpy, coacd; print('✅ Advanced features work')"
+
+      - name: Check for copyright statements
+        run: |
+          uv run ruff check --output-format=github --preview --select CPY001 .

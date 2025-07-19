@@ -21,10 +21,14 @@ jobs:
       with:
         submodules: 'recursive'
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        version: "latest"
+
     - name: Build source/pure python wheels
       run: |
-        python -m pip install build
-        python -m build --outdir=wheelhouse
+        uv build --outdir=wheelhouse
       env:
         INFINIGEN_MINIMAL_INSTALL: "True"
 
@@ -41,8 +45,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # we skip Windows since that results in pure Python wheels
-          # anyway; (compile_terrain.sh is not supported on Windows)
+          # Windows support added
+          - os: windows-latest
+            cibw_archs: "x86_64"
           - os: ubuntu-latest
             cibw_archs: "x86_64"
           - os: ubuntu-latest
@@ -98,11 +103,39 @@ jobs:
         path: ./wheelhouse/*.whl
         if-no-files-found: error
 
+  build_windows:
+    name: Build Windows wheels
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        version: "latest"
+
+    - name: Build Windows wheels
+      run: |
+        uv build --outdir=wheelhouse
+      env:
+        INFINIGEN_MINIMAL_INSTALL: "True"
+
+    - name: Upload Windows artifacts to github
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-windows-x86_64
+        path: ./wheelhouse/*.whl
+        if-no-files-found: error
+
   publish_to_pypi:
     name: Publish wheels to PyPi
     # if branch main repo "infinigen"
     if: github.repository == 'princeton-vl/infinigen' && github.event_name == 'push'
-    needs: [build_sdist_purepy, build_wheels]
+    needs: [build_sdist_purepy, build_wheels, build_windows]
     runs-on: ubuntu-latest
     steps:
       - name: Download packages
