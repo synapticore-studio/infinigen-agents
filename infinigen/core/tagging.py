@@ -118,6 +118,9 @@ class AutoTag:
                     f"{obj.name=} had {COMBINED_ATTR_NAME} on {domain=}, expected FACE"
                 )
             tagint = surface.read_attr_data(obj, COMBINED_ATTR_NAME, domain="FACE")
+            # Ensure int64 dtype for Blender 4.4 compatibility
+            if tagint.dtype != np.int64:
+                tagint = tagint.astype(np.int64)
         else:
             tagint = np.full(n_poly, 0, np.int64)
 

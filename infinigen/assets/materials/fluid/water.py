@@ -17,8 +17,6 @@ from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import Attributes, SurfaceTypes
 from infinigen.core.util.random import random_general as rg
-from infinigen.terrain.assets.ocean import spatial_size
-from infinigen.terrain.utils import drive_param
 
 type = SurfaceTypes.BlenderDisplacement
 mod_name = "geo_water"
@@ -85,6 +83,7 @@ def geo_water(
 
         animated_position = nw.add(Vector([0, 0, 0]), position0, position_shift)
         if waves_animation_speed is not None:
+            from infinigen.terrain.utils import drive_param
             drive_param(
                 animated_position.inputs[0],
                 rg(waves_animation_speed),
@@ -122,6 +121,7 @@ def geo_water(
                 attrs={"wave_type": "RINGS", "rings_direction": "SPHERICAL"},
             )
             if animate_ripples:
+                from infinigen.terrain.utils import drive_param
                 drive_param(
                     instance_offset.inputs["Phase Offset"],
                     -uniform(0.2, 1),
@@ -156,7 +156,9 @@ def geo_water(
             [1 / tile_size] * 3,
         )
         sampled_disp = nw.new_node(Nodes.ImageTexture, [seq, position])
+        from infinigen.terrain.utils import drive_param
         drive_param(sampled_disp.inputs["Frame"], 1, 0)
+        from infinigen.terrain.assets.ocean import spatial_size
         offset = nw.multiply(
             sampled_disp,
             Vector(
@@ -174,6 +176,7 @@ def geo_water(
         seq = bpy.data.images.load(str(filepath))
         seq.source = "SEQUENCE"
         foam = nw.new_node(Nodes.ImageTexture, [seq, position])
+        from infinigen.terrain.utils import drive_param
         drive_param(foam.inputs["Frame"], 1, 0)
         if coastal:
             X = nw.new_node(Nodes.SeparateXYZ, [position0])

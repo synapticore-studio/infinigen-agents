@@ -310,6 +310,20 @@ class NodeWrangler:
         if output_socket is None and hasattr(input_socket, "default_value"):
             # we couldnt parse the inp to be any kind of node, it must be a default_value for us to assign
             try:
+                # Handle numpy arrays for Blender 4.4 compatibility
+                if hasattr(input_item, 'tolist'):
+                    input_item = input_item.tolist()
+                
+                # Handle type conversion for Blender 4.4 strict typing
+                if input_socket.type == "VALUE" and isinstance(input_item, (list, tuple)):
+                    # For float sockets, use first value if list/tuple
+                    input_item = float(input_item[0]) if input_item else 0.0
+                elif input_socket.type == "RGBA" and isinstance(input_item, (list, tuple)):
+                    # For color sockets, ensure 4 values
+                    if len(input_item) == 3:
+                        input_item = list(input_item) + [1.0]
+                    input_item = tuple(input_item)
+                
                 input_socket.default_value = input_item
                 return
             except TypeError as e:

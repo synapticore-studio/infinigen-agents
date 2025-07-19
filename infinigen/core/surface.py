@@ -95,6 +95,10 @@ def read_attr_data(obj, attr, domain="POINT", result_dtype=None) -> np.array:
     if dim > 1:
         data = data.reshape(-1, dim)
 
+    # Ensure int64 dtype for Blender 4.4 compatibility
+    if result_dtype == np.int32:
+        data = data.astype(np.int64)
+
     return data
 
 
