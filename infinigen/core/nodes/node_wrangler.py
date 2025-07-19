@@ -270,7 +270,7 @@ class NodeWrangler:
                     self.modifier[id] = prepare_cast(type(curr_mod_inp_val.real), val)
             if attribute is not None:
                 self.modifier[f"{id}_attribute_name"] = attribute
-                self.modifier[f"{id}_use_attribute"] = 1
+                self.modifier[f"{id}_use_attribute"] = True
 
         assert len([o for o in group_input.outputs if o.name == name]) == 1
         return group_input.outputs[name]

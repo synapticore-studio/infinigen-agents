@@ -17,7 +17,6 @@ from infinigen.core.nodes.node_wrangler import Nodes
 from infinigen.core.util.math import FixedSeed
 from infinigen.core.util.organization import SurfaceTypes
 from infinigen.core.util.random import random_color_neighbour
-from infinigen.terrain.utils import drive_param
 
 type = SurfaceTypes.BlenderDisplacement
 mod_name = "lava_geo"
@@ -130,6 +129,7 @@ def lava_shader(nw):
         input_kwargs={"Vector": noise_texture_2.outputs["Fac"], "Scale": 10.0},
         attrs={"voronoi_dimensions": "4D", "feature": "DISTANCE_TO_EDGE"},
     )
+    from infinigen.terrain.utils import drive_param
     drive_param(voronoi_texture.inputs["W"], scale=0.003, offset=uniform(0, 10))
 
     colorramp_1 = nw.new_node(
@@ -151,6 +151,7 @@ def lava_shader(nw):
         input_kwargs={"Vector": noise_texture_3.outputs["Fac"], "Scale": 10.0},
         attrs={"voronoi_dimensions": "4D", "feature": "DISTANCE_TO_EDGE"},
     )
+    from infinigen.terrain.utils import drive_param
     drive_param(voronoi_texture_1.inputs["W"], scale=0.003, offset=uniform(0, 10))
 
     colorramp_2 = nw.new_node(
@@ -288,6 +289,7 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
             Nodes.NoiseTexture,
             attrs={"noise_dimensions": "4D"},
         )
+        from infinigen.terrain.utils import drive_param
         drive_param(noise_texture_1.inputs["W"], 0.01)
 
         separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})

@@ -165,6 +165,9 @@ def random_color_neighbour(
     assert not (only_less_val and only_more_val)
 
     hsv, a = _rgb_to_hsv(rgb)
+    
+    # Convert tuple to list for modification
+    hsv = list(hsv)
 
     def sample(x, diff, low=0, high=1, only_less=False, only_more=False):
         """
