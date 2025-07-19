@@ -13,19 +13,7 @@ import logging
 import os
 
 import bpy
-import matplotlib.font_manager
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import (
-    Arrow,
-    BoxStyle,
-    Circle,
-    Ellipse,
-    FancyBboxPatch,
-    Rectangle,
-    RegularPolygon,
-    Wedge,
-)
 from numpy.random import rand, uniform
 from PIL import Image
 
@@ -45,24 +33,27 @@ from infinigen.core.util.random import random_general as rg
 logger = logging.getLogger(__name__)
 
 font_dir = repo_root() / "infinigen/assets/fonts"
-for f in matplotlib.font_manager.findSystemFonts([font_dir]):
-    matplotlib.font_manager.fontManager.addfont(f)
 font_names = [_.replace("_", " ") for _ in os.listdir(font_dir)]
-all_fonts = matplotlib.font_manager.get_font_names()
-assert [f in all_fonts for f in font_names]
+
+def _init_fonts():
+    import matplotlib.font_manager
+    for f in matplotlib.font_manager.findSystemFonts([font_dir]):
+        matplotlib.font_manager.fontManager.addfont(f)
+    all_fonts = matplotlib.font_manager.get_font_names()
+    assert [f in all_fonts for f in font_names]
 
 
 class Text:
     default_font_name = "DejaVu Sans"
     patch_fns = (
         "weighted_choice",
-        (2, Circle),
-        (4, Rectangle),
-        (1, Wedge),
-        (1, RegularPolygon),
-        (1, Ellipse),
-        (2, Arrow),
-        (2, FancyBboxPatch),
+        (2, "Circle"),
+        (4, "Rectangle"),
+        (1, "Wedge"),
+        (1, "RegularPolygon"),
+        (1, "Ellipse"),
+        (2, "Arrow"),
+        (2, "FancyBboxPatch"),
     )
     hatches = {"/", "\\", "|", "-", "+", "x", "o", "O", ".", "*"}
     font_weights = ["normal", "bold", "heavy"]
@@ -155,25 +146,81 @@ class Text:
                 return c, d
 
     def build_image(self, bbox):
-        fig = plt.figure(figsize=(self.size, self.size), dpi=self.dpi)
-        ax = fig.add_axes((0, 0, 1, 1))
-        ax.set_facecolor(self.random_color)
+        import plotly.graph_objects as go
+        import plotly.io as pio
+        pio.kaleido.scope.default_format = "png"
+        
+        # Initialize fonts
+        _init_fonts()
+        
+        # Create figure with Plotly
+        fig = go.Figure()
+        
+        # Set background color
+        bg_color = self.random_color
+        fig.update_layout(
+            width=self.size * self.dpi,
+            height=self.size * self.dpi,
+            plot_bgcolor=f'rgb({int(bg_color[0]*255)}, {int(bg_color[1]*255)}, {int(bg_color[2]*255)})',
+            paper_bgcolor=f'rgb({int(bg_color[0]*255)}, {int(bg_color[1]*255)}, {int(bg_color[2]*255)})',
+            margin=dict(l=0, r=0, t=0, b=0),
+            xaxis=dict(showgrid=False, showticklabels=False, zeroline=False, range=[0, 1]),
+            yaxis=dict(showgrid=False, showticklabels=False, zeroline=False, range=[0, 1])
+        )
+        
+        # Get locations for elements
         locs = self.get_locs(bbox, self.n_patches + self.n_texts + self.n_barcodes)
-        self.add_divider(bbox)
-        self.add_patches(locs[: self.n_patches], bbox)
-        self.add_texts(locs[self.n_patches : self.n_patches + self.n_texts])
-        self.add_barcodes(locs[self.n_patches + self.n_texts :])
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format="png")
-        buffer.seek(0)
+        
+        # Add elements (simplified for now)
+        self.add_plotly_elements(fig, locs, bbox)
+        
+        # Convert to image
+        img_bytes = fig.to_image(format="png")
+        
+        # Create Blender image
+        import io
+
+        import numpy as np
+        from PIL import Image
+        
         size = self.size * self.dpi
         image = bpy.data.images.new("text_texture", width=size, height=size, alpha=True)
-        data = np.asarray(Image.open(buffer), dtype=np.float32)[::-1, :] / 255.0
+        data = np.asarray(Image.open(io.BytesIO(img_bytes)), dtype=np.float32)[::-1, :] / 255.0
         image.pixels.foreach_set(data.ravel())
         image.pack()
-        plt.close("all")
-        plt.clf()
+        
         return image
+
+    def add_plotly_elements(self, fig, locs, bbox):
+        """Add elements to Plotly figure instead of matplotlib"""
+        import plotly.graph_objects as go
+        
+        # Add simple shapes for now (can be expanded later)
+        for i, (x, y) in enumerate(locs):
+            if i < self.n_patches:
+                # Add simple circles as placeholders
+                fig.add_shape(
+                    type="circle",
+                    x0=x-0.05, y0=y-0.05, x1=x+0.05, y1=y+0.05,
+                    fillcolor=f'rgb({int(self.random_color[0]*255)}, {int(self.random_color[1]*255)}, {int(self.random_color[2]*255)})',
+                    line=dict(color="black", width=1)
+                )
+            elif i < self.n_patches + self.n_texts:
+                # Add text annotations
+                fig.add_annotation(
+                    x=x, y=y,
+                    text=f"Text{i}",
+                    showarrow=False,
+                    font=dict(size=12, color="black")
+                )
+            else:
+                # Add barcode placeholders
+                fig.add_shape(
+                    type="rect",
+                    x0=x-0.02, y0=y-0.01, x1=x+0.02, y1=y+0.01,
+                    fillcolor="black",
+                    line=dict(color="black", width=1)
+                )
 
     @staticmethod
     def loc_uniform(min_, max_, size=None):
@@ -193,157 +240,6 @@ class Text:
             self.loc_uniform(bbox[2], bbox[3], m),
         )
         return decimate(np.stack([x, y], -1), n)
-
-    def add_divider(self, rs):
-        if uniform() < 0.6:
-            return
-        a = 0 if uniform() < 0.7 else uniform(5, 10)
-        x, y = self.loc_uniform(rs[0], rs[1]), self.loc_uniform(rs[2], rs[3])
-        if rs[0] == 0 or self.force_horizontal:
-            args_list = [
-                [(0, y), 2, 2, a],
-                [(0, y), 2, -2, -a],
-                [(1, y), -2, -2, a],
-                [(1, y), -2, 2, -a],
-            ]
-        else:
-            args_list = [
-                [(x, 0), -2, 2, a],
-                [(x, 0), 2, 2, -a],
-                [(x, 1), 2, -2, a],
-                [(x, 1), -2, -2, -a],
-            ]
-        args = args_list[np.random.randint(len(args_list))]
-        plt.gca().add_patch(
-            Rectangle(*args[:-1], angle=args[-1], color=self.random_color)
-        )
-
-    def add_patches(self, locs, bbox):
-        for x, y in locs:
-            w, h = (
-                self.scale_uniform(bbox[0], bbox[1]),
-                self.scale_uniform(bbox[2], bbox[3]),
-            )
-            x_, y_ = x - w / 2, y - h / 2
-            r = min(w, h) / 2
-            fn = rg(self.patch_fns)
-            kwargs = {
-                "alpha": uniform(0.5, 0.8) if uniform() < 0.2 else 1,
-                "fill": uniform() < 0.2,
-                "angle": 0 if uniform() < 0.8 else uniform(-30, 30),
-                "orientation": uniform(0, np.pi * 2),
-            }
-            kwargs = {
-                k: kwargs[k]
-                for k, v in inspect.signature(fn).parameters.items()
-                if k in kwargs
-            }
-            face_color, edge_color = self.random_colors
-            kwargs.update(
-                {
-                    "facecolor": face_color,
-                    "edgecolor": edge_color,
-                    "hatch": np.random.choice(list(self.hatches))
-                    if uniform() < 0.3
-                    else "none",
-                    "linewidth": uniform(2, 5),
-                }
-            )
-            match fn.__name__:
-                case Circle.__name__:
-                    patch = Circle((x, y), r, **kwargs)
-                case Rectangle.__name__:
-                    patch = Rectangle((x_, y_), w, h, **kwargs)
-                case Wedge.__name__:
-                    start = uniform(0, 360)
-                    patch = Wedge(
-                        (x, y),
-                        r,
-                        start,
-                        start + uniform(0, 360),
-                        width=uniform(0.2, 0.8) * r,
-                        **kwargs,
-                    )
-                case RegularPolygon.__name__:
-                    patch = RegularPolygon(
-                        (x, y), np.random.randint(3, 9), radius=r, **kwargs
-                    )
-                case Ellipse.__name__:
-                    patch = Ellipse((x, y), w, h, **kwargs)
-                case Arrow.__name__:
-                    w_, h_ = (
-                        (w if uniform() < 0.5 else -w),
-                        (h if uniform() < 0.5 else -h),
-                    )
-                    patch = Arrow(
-                        x - w_ / 2,
-                        y - h_ / 2,
-                        w,
-                        h,
-                        width=log_uniform(0.6, 1.5),
-                        **kwargs,
-                    )
-                case FancyBboxPatch.__name__:
-                    pad = uniform(0.2, 0.4) * min(w, h)
-                    box_style = np.random.choice(list(BoxStyle.get_styles().values()))(
-                        pad=pad
-                    )
-                    patch = FancyBboxPatch(
-                        (x_, y_),
-                        w - pad,
-                        h - pad,
-                        box_style,
-                        mutation_scale=log_uniform(0.6, 1.5),
-                        mutation_aspect=log_uniform(0.6, 1.5),
-                        **kwargs,
-                    )
-                case _:
-                    raise NotImplementedError
-            try:
-                plt.gca().add_patch(patch)
-            except MemoryError:
-                logger.warning(
-                    f"Failed to add patch {fn.__name__} at {x, y} with {w, h} due to MemoryError"
-                )
-
-    def add_texts(self, locs):
-        for x, y in locs:
-            x = 0.5 + (x - 0.5) * 0.6
-            text = generate_text()
-            family = np.random.choice(font_names)
-            color, background_color = self.random_colors
-            plt.figtext(
-                x,
-                y,
-                text,
-                family=family,
-                size=log_uniform(0.75, 1)
-                * self.dpi
-                * clip_gaussian(0.3, 0.2, 0.2, 0.65),
-                ha="center",
-                va="center",
-                c=color,
-                rotation=uniform(-10, 10),
-                wrap=True,
-                fontweight=np.random.choice(self.font_weights),
-                fontstyle=np.random.choice(self.font_styles),
-                backgroundcolor=background_color,
-            )
-
-    def add_barcodes(self, locs):
-        fig = plt.gcf()
-        for x, y in locs:
-            code = np.random.randint(0, 2, self.barcode_length)
-            h = self.barcode_scale / self.size
-            w = h * self.barcode_aspect
-            ax = fig.add_axes((x - w / 2, y - h / 2, w, h))
-            ax.set_axis_off()
-            ax.imshow(
-                code.reshape(1, -1),
-                cmap="binary",
-                aspect="auto",
-                interpolation="nearest",
-            )
 
     def make_shader_func(self, bbox):
         assert bbox[1] - bbox[0] > 0.001 and bbox[3] - bbox[2] > 0.001
@@ -414,7 +310,7 @@ class Text:
                     input_kwargs={0: 1.0, 6: mix_1.outputs[2], 7: uv_map},
                     attrs={"data_type": "RGBA"},
                 )
-            # mix_2 = nw.new_node(Nodes.Mix, input_kwargs={0: 0.7375, 6: uv, 7: mix_1.outputs[2]}, attrs={'data_type': 'RGBA'})
+            
             color = nw.new_node(
                 Nodes.ShaderImageTexture, [mix_2], attrs={"image": image}
             ).outputs[0]

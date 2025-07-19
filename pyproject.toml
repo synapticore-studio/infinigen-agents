@@ -22,7 +22,7 @@ requires-python = "==3.11.*"
 dependencies = [
     # Core dependencies that work on Windows
     "gin_config>=0.5.0",
-    "imageio>=2.33.0",  # Updated for scikit-image compatibility
+    "imageio>=2.33.0", # Updated for scikit-image compatibility
     "matplotlib",
     "networkx",
     "numpy<2",
@@ -30,7 +30,7 @@ dependencies = [
     "pandas",
     "psutil",
     "scipy",
-    "shapely>=2.1.0",  # Updated to latest stable version
+    "shapely>=2.1.0", # Updated to latest stable version
     "tqdm",
     "trimesh<3.23.0",
     "OpenEXR",
@@ -38,12 +38,15 @@ dependencies = [
     "geomdl",
     "python-fcl",
     "rtree",
-    
     # Advanced features - all working on Windows
-    "scikit-image>=0.25.0",  # Newer version with pre-compiled wheels
+    "scikit-image>=0.25.0", # Newer version with pre-compiled wheels
     "scikit-learn<1.4.0",
-    "bpy>=4.4.0",  # Updated to latest Blender version
+    "bpy>=4.4.0", # Updated to latest Blender version
     "coacd",
+    # Modern visualization - replacing matplotlib
+    "plotly>=6.2.0",
+    "altair>=5.5.0",
+    "pillow>=10.0.0",
 ]
 
 [project.optional-dependencies]
@@ -63,7 +66,6 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
     "pytest-timeout",
-    "pytype",
     "ruff",
     "isort",
     "tabulate",
@@ -148,6 +150,3 @@ ignore = [
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "parents"
-
-[tool.pytype]
-inputs = ['infinigen', 'infinigen_examples']

@@ -19,7 +19,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 from imageio import imwrite
-from matplotlib import pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -86,14 +85,47 @@ def colorize_normals(surface_normals):
 
 
 def colorize_depth(depth, scale_vmin=1.0):
+    import plotly.graph_objects as go
+    import plotly.io as pio
+    pio.kaleido.scope.default_format = "png"
+    
     valid = (depth > 1e-3) & (depth < 1e4)
     vmin = depth[valid].min() * scale_vmin
     vmax = depth[valid].max()
-    cmap = plt.cm.jet
-    norm = plt.Normalize(vmin=vmin, vmax=vmax)
-    depth = cmap(norm(depth))
-    depth[~valid] = 1
-    return np.ascontiguousarray(depth[..., :3] * 255, dtype=np.uint8)
+    
+    # Create heatmap with Plotly
+    fig = go.Figure(data=go.Heatmap(
+        z=depth,
+        colorscale='Jet',
+        zmin=vmin,
+        zmax=vmax,
+        showscale=False
+    ))
+    
+    # Update layout for image export
+    fig.update_layout(
+        width=depth.shape[1],
+        height=depth.shape[0],
+        margin=dict(l=0, r=0, t=0, b=0),
+        xaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
+        yaxis=dict(showgrid=False, showticklabels=False, zeroline=False)
+    )
+    
+    # Convert to image
+    img_bytes = fig.to_image(format="png")
+    import io
+
+    import numpy as np
+    from PIL import Image
+    
+    # Convert bytes to numpy array
+    img = Image.open(io.BytesIO(img_bytes))
+    img_array = np.array(img) / 255.0
+    
+    # Set invalid pixels to white
+    img_array[~valid] = 1
+    
+    return np.ascontiguousarray(img_array[..., :3] * 255, dtype=np.uint8)
 
 
 def colorize_int_array(data, color_seed=0):

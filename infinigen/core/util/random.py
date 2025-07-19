@@ -9,7 +9,6 @@ import json
 
 import mathutils
 import numpy as np
-from matplotlib import colors
 from numpy.random import uniform
 
 import infinigen
@@ -114,11 +113,12 @@ def _rgb_to_hsv(rgb):
     """
     returns (h, s, v) form either (r, g, b) or (r, g, b, a) tuple
     """
+    import colorsys
     a = None
     if len(rgb) == 4:
         a = rgb[-1]
         rgb = rgb[:3]
-    hsv = colors.rgb_to_hsv(rgb)
+    hsv = colorsys.rgb_to_hsv(*rgb)
     return hsv, a
 
 
@@ -126,7 +126,8 @@ def _hsv_to_rgb(hsv, a):
     """
     returns (r, g, b) or (r, g, b, a) form (h, s, v) and a
     """
-    rgb = list(colors.hsv_to_rgb(hsv))
+    import colorsys
+    rgb = list(colorsys.hsv_to_rgb(*hsv))
     if a is not None:
         rgb.append(a)
     return rgb
