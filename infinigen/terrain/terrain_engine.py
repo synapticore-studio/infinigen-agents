@@ -39,6 +39,7 @@ try:
     from infinigen.core.util import blender as butil
     from infinigen.core.util.logging import Timer
     from infinigen.core.util.organization import Tags, TerrainNames
+    from infinigen.terrain.rendering import setup_modern_terrain_rendering
 except ImportError:
     # Fallback for testing
     class Tags:
@@ -58,6 +59,10 @@ except ImportError:
 
     def butil():
         pass
+    
+    def setup_modern_terrain_rendering(terrain_obj=None, quality="high"):
+        """Fallback for modern rendering setup"""
+        return True
 
 
 logger = logging.getLogger(__name__)
@@ -1212,6 +1217,10 @@ class ModernTerrainEngine:
                 self.blender_integration.point_distribution.create_vegetation_distribution(
                     terrain_obj, vegetation_density
                 )
+                
+                # 4.6. Setup modern rendering with Virtual Shadow Mapping and Light Groups
+                rendering_quality = "high" if self.config.resolution >= 512 else "medium"
+                setup_modern_terrain_rendering(terrain_obj, rendering_quality)
 
             # 5. Store in DuckDB if enabled
             if self.spatial_manager:
