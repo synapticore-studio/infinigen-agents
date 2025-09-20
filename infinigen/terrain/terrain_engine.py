@@ -337,7 +337,7 @@ class KernelsInterpolationSystem:
                 kernel = "thin_plate_spline"
             elif kernel_type == "matern":
                 kernel = "multiquadric"  # Closest to Matern
-            else:
+        else:
                 kernel = "thin_plate_spline"
 
             # Create RBF interpolator
@@ -513,13 +513,12 @@ class Blender4SampleOperations:
             links.new(input_node.outputs[0], raycast.inputs[0])
             links.new(input_node.outputs[0], sample_uv_surface.inputs[0])
 
-            # Add output sockets first (only if they don't exist)
-            if len(output_node.inputs) == 0:
-                output_node.inputs.new("NodeSocketGeometry", "SampleIndex")
-                output_node.inputs.new("NodeSocketGeometry", "SampleNearest")
-                output_node.inputs.new("NodeSocketGeometry", "SampleNearestSurface")
-                output_node.inputs.new("NodeSocketGeometry", "Raycast")
-                output_node.inputs.new("NodeSocketGeometry", "SampleUVSurface")
+            # Add output sockets first
+            output_node.inputs.new("NodeSocketGeometry", "SampleIndex")
+            output_node.inputs.new("NodeSocketGeometry", "SampleNearest")
+            output_node.inputs.new("NodeSocketGeometry", "SampleNearestSurface")
+            output_node.inputs.new("NodeSocketGeometry", "Raycast")
+            output_node.inputs.new("NodeSocketGeometry", "SampleUVSurface")
 
             # Connect to output
             links.new(sample_index.outputs[0], output_node.inputs[0])
@@ -685,12 +684,11 @@ class Blender4TopologyNodes:
             links.new(input_node.outputs[0], face_of_corner.inputs[0])
             links.new(input_node.outputs[0], vertex_of_corner.inputs[0])
 
-            # Add output sockets first (only if they don't exist)
-            if len(output_node.inputs) == 0:
-                output_node.inputs.new("NodeSocketGeometry", "Corners")
-                output_node.inputs.new("NodeSocketGeometry", "Edges")
-                output_node.inputs.new("NodeSocketGeometry", "Face")
-                output_node.inputs.new("NodeSocketGeometry", "Vertex")
+            # Add output sockets first
+            output_node.inputs.new("NodeSocketGeometry", "Corners")
+            output_node.inputs.new("NodeSocketGeometry", "Edges")
+            output_node.inputs.new("NodeSocketGeometry", "Face")
+            output_node.inputs.new("NodeSocketGeometry", "Vertex")
 
             # Connect to output
             links.new(corners_of_face.outputs[0], output_node.inputs[0])
@@ -845,9 +843,8 @@ class Blender4LODSystem:
             switch_node.location = (400, 0)
             output_node.location = (600, 0)
 
-            # Add output sockets (only if they don't exist)
-            if len(output_node.inputs) == 0:
-                output_node.inputs.new("NodeSocketGeometry", "Geometry")
+            # Add output sockets
+            output_node.inputs.new("NodeSocketGeometry", "Geometry")
 
             # Connect nodes
             links = node_group.links
@@ -930,9 +927,8 @@ class Blender4PointDistribution:
             instance_on_points.location = (400, 0)
             output_node.location = (600, 0)
 
-            # Add output sockets (only if they don't exist)
-            if len(output_node.inputs) == 0:
-                output_node.inputs.new("NodeSocketGeometry", "Geometry")
+            # Add output sockets
+            output_node.inputs.new("NodeSocketGeometry", "Geometry")
 
             # Connect nodes
             links = node_group.links
@@ -1006,7 +1002,7 @@ class Blender4Integration:
             # Create or get material
             if material_name in bpy.data.materials:
                 material = bpy.data.materials[material_name]
-            else:
+        else:
                 material = bpy.data.materials.new(name=material_name)
                 material.use_nodes = True
 
@@ -1049,6 +1045,8 @@ class Blender4Integration:
             # Add nodes
             input_node = node_group.nodes.new("NodeGroupInput")
             output_node = node_group.nodes.new("NodeGroupOutput")
+
+            # Built-in nodes already have their sockets - no need to add them
 
             input_node.location = (0, 0)
             output_node.location = (200, 0)
