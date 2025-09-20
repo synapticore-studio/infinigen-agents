@@ -106,6 +106,7 @@ class TerrainConfig:
     use_kernels_interpolation: bool = True
     use_duckdb_storage: bool = True
     enable_advanced_features: bool = True
+    enable_geometry_baking: bool = True  # Blender 4.5.3+ feature
 
 
 class ModernMeshSystem:
@@ -129,7 +130,7 @@ class ModernMeshSystem:
             # Create grid coordinates
             x = np.linspace(x_min, x_max, w)
             y = np.linspace(y_min, y_max, h)
-            X, Y = np.meshgrid(x, y)
+        X, Y = np.meshgrid(x, y)
 
             # Create vertices
             vertices = np.stack(
@@ -167,30 +168,30 @@ class ModernMeshSystem:
         name: str,
     ) -> trimesh.Trimesh:
         """Fallback mesh creation"""
-        h, w = height_map.shape
+            h, w = height_map.shape
         x_min, x_max, y_min, y_max = bounds
 
         # Simple grid-based mesh
-        vertices = []
+            vertices = []
         faces = []
 
-        for i in range(h):
-            for j in range(w):
+            for i in range(h):
+                for j in range(w):
                 x = x_min + (x_max - x_min) * j / (w - 1)
                 y = y_min + (y_max - y_min) * i / (h - 1)
                 z = height_map[i, j]
                 vertices.append([x, y, z])
 
         # Create faces
-        for i in range(h - 1):
-            for j in range(w - 1):
-                v1 = i * w + j
-                v2 = v1 + 1
-                v3 = (i + 1) * w + j
-                v4 = v3 + 1
+            for i in range(h - 1):
+                for j in range(w - 1):
+                    v1 = i * w + j
+                    v2 = v1 + 1
+                    v3 = (i + 1) * w + j
+                    v4 = v3 + 1
 
-                faces.append([v1, v2, v3])
-                faces.append([v2, v4, v3])
+                    faces.append([v1, v2, v3])
+                    faces.append([v2, v4, v3])
 
         return trimesh.Trimesh(vertices=vertices, faces=faces)
 
@@ -496,7 +497,7 @@ class DuckDBSpatialManager:
 
 
 class Blender4Integration:
-    """Modern Blender 4.4+ integration"""
+    """Modern Blender 4.5.3+ integration with Geometry Node Baking"""
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -576,7 +577,7 @@ class Blender4Integration:
             self.logger.warning(f"Could not apply modern material: {e}")
 
     def _setup_geometry_nodes(self, obj: bpy.types.Object):
-        """Setup Geometry Nodes modifier for modern Blender"""
+        """Setup Geometry Nodes modifier for modern Blender 4.5.3+"""
         try:
             # Add Geometry Nodes modifier
             geom_mod = obj.modifiers.new(name="TerrainGeometry", type="NODES")
@@ -599,6 +600,45 @@ class Blender4Integration:
 
         except Exception as e:
             self.logger.warning(f"Could not setup geometry nodes: {e}")
+
+    def bake_terrain_geometry(self, obj: bpy.types.Object) -> bool:
+        """Bake terrain geometry using Blender 4.5.3 Geometry Node Baking"""
+        try:
+            # Select the object
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+
+            # Use the new Geometry Node Baking operator
+            bpy.ops.object.geometry_node_bake_single()
+
+            self.logger.info(f"✅ Terrain geometry baked successfully: {obj.name}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error baking terrain geometry: {e}")
+            return False
+
+    def create_terrain_with_baking(
+        self, 
+        mesh: trimesh.Trimesh, 
+        name: str = "terrain",
+        material_name: str = "terrain_material",
+        enable_baking: bool = True
+    ) -> bpy.types.Object:
+        """Create terrain object with optional geometry baking"""
+        try:
+            # Create the basic terrain object
+            terrain_obj = self.create_terrain_object(mesh, name, material_name)
+            
+            if terrain_obj and enable_baking:
+                # Bake the geometry for performance
+                self.bake_terrain_geometry(terrain_obj)
+            
+            return terrain_obj
+
+        except Exception as e:
+            self.logger.error(f"Error creating terrain with baking: {e}")
+            return None
 
     def _setup_attributes(self, obj: bpy.types.Object, mesh: trimesh.Trimesh):
         """Setup vertex attributes for modern Blender"""
@@ -661,9 +701,11 @@ class ModernTerrainEngine:
             bounds = self.config.bounds[:4]  # x_min, x_max, y_min, y_max
             mesh = self.mesh_system.create_from_heightmap(height_map, bounds)
 
-            # 4. Create Blender object
-            terrain_obj = self.blender_integration.create_terrain_object(
-                mesh, f"{self.config.terrain_type.value}_terrain_{self.config.seed}"
+            # 4. Create Blender object with baking
+            terrain_obj = self.blender_integration.create_terrain_with_baking(
+                mesh, 
+                f"{self.config.terrain_type.value}_terrain_{self.config.seed}",
+                enable_baking=self.config.enable_geometry_baking
             )
 
             # 5. Store in DuckDB if enabled
