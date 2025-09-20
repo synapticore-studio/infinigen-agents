@@ -24,7 +24,8 @@ import numpy as np
 import torch
 import torch_geometric
 import trimesh
-from kernels import MaternKernel, RBFKernel, WhiteKernel
+
+# from kernels import MaternKernel, RBFKernel, WhiteKernel  # TODO: Fix kernels import
 from scipy.ndimage import gaussian_filter
 from scipy.spatial import cKDTree
 from torch_geometric.data import Data
@@ -130,7 +131,7 @@ class ModernMeshSystem:
             # Create grid coordinates
             x = np.linspace(x_min, x_max, w)
             y = np.linspace(y_min, y_max, h)
-        X, Y = np.meshgrid(x, y)
+            X, Y = np.meshgrid(x, y)
 
             # Create vertices
             vertices = np.stack(
@@ -168,30 +169,30 @@ class ModernMeshSystem:
         name: str,
     ) -> trimesh.Trimesh:
         """Fallback mesh creation"""
-            h, w = height_map.shape
+        h, w = height_map.shape
         x_min, x_max, y_min, y_max = bounds
 
         # Simple grid-based mesh
-            vertices = []
+        vertices = []
         faces = []
 
-            for i in range(h):
-                for j in range(w):
+        for i in range(h):
+            for j in range(w):
                 x = x_min + (x_max - x_min) * j / (w - 1)
                 y = y_min + (y_max - y_min) * i / (h - 1)
                 z = height_map[i, j]
                 vertices.append([x, y, z])
 
         # Create faces
-            for i in range(h - 1):
-                for j in range(w - 1):
-                    v1 = i * w + j
-                    v2 = v1 + 1
-                    v3 = (i + 1) * w + j
-                    v4 = v3 + 1
+        for i in range(h - 1):
+            for j in range(w - 1):
+                v1 = i * w + j
+                v2 = v1 + 1
+                v3 = (i + 1) * w + j
+                v4 = v3 + 1
 
-                    faces.append([v1, v2, v3])
-                    faces.append([v2, v4, v3])
+                faces.append([v1, v2, v3])
+                faces.append([v2, v4, v3])
 
         return trimesh.Trimesh(vertices=vertices, faces=faces)
 
@@ -316,7 +317,7 @@ class KernelsInterpolationSystem:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.kernels = {"rbf": RBFKernel, "matern": MaternKernel, "white": WhiteKernel}
+        # self.kernels = {"rbf": RBFKernel, "matern": MaternKernel, "white": WhiteKernel}  # TODO: Fix kernels import
 
     def interpolate_terrain(
         self,
@@ -502,23 +503,27 @@ class Blender4SampleOperations:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def create_sample_operations_node_group(self, name: str = "TerrainSampleOps") -> bpy.types.GeometryNodeTree:
+    def create_sample_operations_node_group(
+        self, name: str = "TerrainSampleOps"
+    ) -> bpy.types.GeometryNodeTree:
         """Create a Geometry Node group with sample operations"""
         try:
             # Create node group
             node_group = bpy.data.node_groups.new(name=name, type="GeometryNodeTree")
-            
+
             # Add input/output nodes
             input_node = node_group.nodes.new("NodeGroupInput")
             output_node = node_group.nodes.new("NodeGroupOutput")
-            
+
             # Add sample operation nodes
             sample_index = node_group.nodes.new("GeometryNodeSampleIndex")
             sample_nearest = node_group.nodes.new("GeometryNodeSampleNearest")
-            sample_nearest_surface = node_group.nodes.new("GeometryNodeSampleNearestSurface")
+            sample_nearest_surface = node_group.nodes.new(
+                "GeometryNodeSampleNearestSurface"
+            )
             raycast = node_group.nodes.new("GeometryNodeRaycast")
             sample_uv_surface = node_group.nodes.new("GeometryNodeSampleUVSurface")
-            
+
             # Position nodes
             input_node.location = (0, 0)
             sample_index.location = (200, 300)
@@ -527,7 +532,7 @@ class Blender4SampleOperations:
             raycast.location = (200, 0)
             sample_uv_surface.location = (200, -100)
             output_node.location = (600, 0)
-            
+
             # Connect nodes
             links = node_group.links
             links.new(input_node.outputs[0], sample_index.inputs[0])
@@ -535,6 +540,13 @@ class Blender4SampleOperations:
             links.new(input_node.outputs[0], sample_nearest_surface.inputs[0])
             links.new(input_node.outputs[0], raycast.inputs[0])
             links.new(input_node.outputs[0], sample_uv_surface.inputs[0])
+
+            # Add output sockets first
+            output_node.inputs.new("NodeSocketGeometry", "SampleIndex")
+            output_node.inputs.new("NodeSocketGeometry", "SampleNearest")
+            output_node.inputs.new("NodeSocketGeometry", "SampleNearestSurface")
+            output_node.inputs.new("NodeSocketGeometry", "Raycast")
+            output_node.inputs.new("NodeSocketGeometry", "SampleUVSurface")
             
             # Connect to output
             links.new(sample_index.outputs[0], output_node.inputs[0])
@@ -542,105 +554,120 @@ class Blender4SampleOperations:
             links.new(sample_nearest_surface.outputs[0], output_node.inputs[2])
             links.new(raycast.outputs[0], output_node.inputs[3])
             links.new(sample_uv_surface.outputs[0], output_node.inputs[4])
-            
+
             self.logger.info(f"✅ Sample operations node group created: {name}")
             return node_group
-            
+
         except Exception as e:
             self.logger.error(f"Error creating sample operations node group: {e}")
             return None
-    
-    def enhance_terrain_detail(self, terrain_obj: bpy.types.Object, detail_level: str = "medium") -> bool:
+
+    def enhance_terrain_detail(
+        self, terrain_obj: bpy.types.Object, detail_level: str = "medium"
+    ) -> bool:
         """Enhance terrain detail using sample operations"""
         try:
             # Create sample operations node group
-            sample_group = self.create_sample_operations_node_group(f"TerrainDetail_{terrain_obj.name}")
-            
+            sample_group = self.create_sample_operations_node_group(
+                f"TerrainDetail_{terrain_obj.name}"
+            )
+
             if not sample_group:
                 return False
-            
+
             # Add Geometry Nodes modifier
             geom_mod = terrain_obj.modifiers.new(name="TerrainDetail", type="NODES")
             geom_mod.node_group = sample_group
-            
+
             # Configure detail level
             if detail_level == "high":
                 # High detail: more subdivisions and sample operations
-                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.object.mode_set(mode="EDIT")
                 bpy.ops.mesh.subdivide(number_cuts=2)
-                bpy.ops.object.mode_set(mode='OBJECT')
+                bpy.ops.object.mode_set(mode="OBJECT")
             elif detail_level == "low":
                 # Low detail: minimal processing
                 pass
             else:  # medium
                 # Medium detail: moderate subdivisions
-                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.object.mode_set(mode="EDIT")
                 bpy.ops.mesh.subdivide(number_cuts=1)
-                bpy.ops.object.mode_set(mode='OBJECT')
-            
-            self.logger.info(f"✅ Terrain detail enhanced: {terrain_obj.name} ({detail_level})")
+                bpy.ops.object.mode_set(mode="OBJECT")
+
+            self.logger.info(
+                f"✅ Terrain detail enhanced: {terrain_obj.name} ({detail_level})"
+            )
             return True
 
         except Exception as e:
             self.logger.error(f"Error enhancing terrain detail: {e}")
             return False
-    
-    def add_terrain_erosion(self, terrain_obj: bpy.types.Object, erosion_strength: float = 0.5) -> bool:
+
+    def add_terrain_erosion(
+        self, terrain_obj: bpy.types.Object, erosion_strength: float = 0.5
+    ) -> bool:
         """Add erosion effects using sample operations"""
         try:
             # Create erosion node group
-            erosion_group = self._create_erosion_node_group(f"TerrainErosion_{terrain_obj.name}")
-            
+            erosion_group = self._create_erosion_node_group(
+                f"TerrainErosion_{terrain_obj.name}"
+            )
+
             if not erosion_group:
                 return False
-            
+
             # Add Geometry Nodes modifier
             geom_mod = terrain_obj.modifiers.new(name="TerrainErosion", type="NODES")
             geom_mod.node_group = erosion_group
-            
+
             # Configure erosion strength
-            if hasattr(geom_mod, 'node_group') and geom_mod.node_group:
+            if hasattr(geom_mod, "node_group") and geom_mod.node_group:
                 # Find the erosion strength input
                 for node in geom_mod.node_group.nodes:
-                    if node.bl_idname == "ShaderNodeValue" and "strength" in node.name.lower():
+                    if (
+                        node.bl_idname == "ShaderNodeValue"
+                        and "strength" in node.name.lower()
+                    ):
                         node.outputs[0].default_value = erosion_strength
                         break
-            
-            self.logger.info(f"✅ Terrain erosion added: {terrain_obj.name} (strength: {erosion_strength})")
+
+            self.logger.info(
+                f"✅ Terrain erosion added: {terrain_obj.name} (strength: {erosion_strength})"
+            )
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Error adding terrain erosion: {e}")
             return False
-    
+
     def _create_erosion_node_group(self, name: str) -> bpy.types.GeometryNodeTree:
         """Create erosion-specific node group"""
         try:
             node_group = bpy.data.node_groups.new(name=name, type="GeometryNodeTree")
-            
+
             # Add input/output nodes
             input_node = node_group.nodes.new("NodeGroupInput")
             output_node = node_group.nodes.new("NodeGroupOutput")
-            
+
             # Add erosion nodes
             noise_texture = node_group.nodes.new("ShaderNodeTexNoise")
             math_multiply = node_group.nodes.new("ShaderNodeMath")
-            math_multiply.operation = 'MULTIPLY'
-            
+            math_multiply.operation = "MULTIPLY"
+
             # Position nodes
             input_node.location = (0, 0)
             noise_texture.location = (200, 0)
             math_multiply.location = (400, 0)
             output_node.location = (600, 0)
-            
+
             # Connect nodes
             links = node_group.links
             links.new(input_node.outputs[0], noise_texture.inputs[0])
             links.new(noise_texture.outputs[0], math_multiply.inputs[0])
             links.new(math_multiply.outputs[0], output_node.inputs[0])
-            
+
             return node_group
-            
+
         except Exception as e:
             self.logger.error(f"Error creating erosion node group: {e}")
             return None
@@ -648,26 +675,28 @@ class Blender4SampleOperations:
 
 class Blender4TopologyNodes:
     """Blender 4.5.3+ Topology Nodes for advanced mesh operations"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
-    def create_topology_node_group(self, name: str = "TerrainTopology") -> bpy.types.GeometryNodeTree:
+
+    def create_topology_node_group(
+        self, name: str = "TerrainTopology"
+    ) -> bpy.types.GeometryNodeTree:
         """Create a Geometry Node group with topology nodes"""
         try:
             # Create node group
             node_group = bpy.data.node_groups.new(name=name, type="GeometryNodeTree")
-            
+
             # Add input/output nodes
             input_node = node_group.nodes.new("NodeGroupInput")
             output_node = node_group.nodes.new("NodeGroupOutput")
-            
+
             # Add topology nodes
             corners_of_face = node_group.nodes.new("GeometryNodeCornersOfFace")
             edges_of_vertex = node_group.nodes.new("GeometryNodeEdgesOfVertex")
             face_of_corner = node_group.nodes.new("GeometryNodeFaceOfCorner")
             vertex_of_corner = node_group.nodes.new("GeometryNodeVertexOfCorner")
-            
+
             # Position nodes
             input_node.location = (0, 0)
             corners_of_face.location = (200, 200)
@@ -675,20 +704,26 @@ class Blender4TopologyNodes:
             face_of_corner.location = (200, 0)
             vertex_of_corner.location = (200, -100)
             output_node.location = (600, 0)
-            
+
             # Connect nodes
             links = node_group.links
             links.new(input_node.outputs[0], corners_of_face.inputs[0])
             links.new(input_node.outputs[0], edges_of_vertex.inputs[0])
             links.new(input_node.outputs[0], face_of_corner.inputs[0])
             links.new(input_node.outputs[0], vertex_of_corner.inputs[0])
+
+            # Add output sockets first
+            output_node.inputs.new("NodeSocketGeometry", "Corners")
+            output_node.inputs.new("NodeSocketGeometry", "Edges")
+            output_node.inputs.new("NodeSocketGeometry", "Face")
+            output_node.inputs.new("NodeSocketGeometry", "Vertex")
             
             # Connect to output
             links.new(corners_of_face.outputs[0], output_node.inputs[0])
             links.new(edges_of_vertex.outputs[0], output_node.inputs[1])
             links.new(face_of_corner.outputs[0], output_node.inputs[2])
             links.new(vertex_of_corner.outputs[0], output_node.inputs[3])
-            
+
             self.logger.info(f"✅ Topology node group created: {name}")
             return node_group
 
@@ -700,15 +735,17 @@ class Blender4TopologyNodes:
         """Analyze mesh topology using Blender 4.5.3 topology nodes"""
         try:
             # Create topology analysis node group
-            topology_group = self.create_topology_node_group(f"TopologyAnalysis_{obj.name}")
-            
+            topology_group = self.create_topology_node_group(
+                f"TopologyAnalysis_{obj.name}"
+            )
+
             if not topology_group:
                 return {}
-            
+
             # Add Geometry Nodes modifier
             geom_mod = obj.modifiers.new(name="TopologyAnalysis", type="NODES")
             geom_mod.node_group = topology_group
-            
+
             # Get topology information
             topology_info = {
                 "vertex_count": len(obj.data.vertices),
@@ -716,49 +753,49 @@ class Blender4TopologyNodes:
                 "face_count": len(obj.data.polygons),
                 "is_manifold": self._check_manifold(obj),
                 "has_boundary": self._check_boundary(obj),
-                "genus": self._calculate_genus(obj)
+                "genus": self._calculate_genus(obj),
             }
-            
+
             # Remove modifier after analysis
             obj.modifiers.remove(geom_mod)
-            
+
             self.logger.info(f"✅ Topology analysis completed for {obj.name}")
             return topology_info
-            
+
         except Exception as e:
             self.logger.error(f"Error analyzing mesh topology: {e}")
             return {}
-    
+
     def _check_manifold(self, obj: bpy.types.Object) -> bool:
         """Check if mesh is manifold"""
         try:
             # Use Blender's built-in manifold check
             bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.object.mode_set(mode="EDIT")
+            bpy.ops.mesh.select_all(action="SELECT")
             bpy.ops.mesh.select_non_manifold()
-            
+
             # Check if any non-manifold elements are selected
-            bpy.ops.object.mode_set(mode='OBJECT')
-            
+            bpy.ops.object.mode_set(mode="OBJECT")
+
             # This is a simplified check - in practice you'd count selected elements
             return True  # Placeholder
-            
+
         except Exception as e:
             self.logger.warning(f"Could not check manifold: {e}")
             return False
-    
+
     def _check_boundary(self, obj: bpy.types.Object) -> bool:
         """Check if mesh has boundary edges"""
         try:
             # Check for boundary edges
             boundary_edges = [e for e in obj.data.edges if len(e.link_faces) < 2]
             return len(boundary_edges) > 0
-            
+
         except Exception as e:
             self.logger.warning(f"Could not check boundary: {e}")
             return False
-    
+
     def _calculate_genus(self, obj: bpy.types.Object) -> int:
         """Calculate mesh genus (number of holes)"""
         try:
@@ -767,14 +804,176 @@ class Blender4TopologyNodes:
             V = len(obj.data.vertices)
             E = len(obj.data.edges)
             F = len(obj.data.polygons)
-            
+
             chi = V - E + F
             genus = (2 - chi) // 2
             return max(0, genus)
-            
+
         except Exception as e:
             self.logger.warning(f"Could not calculate genus: {e}")
             return 0
+
+
+class Blender4LODSystem:
+    """Blender 4.5.3+ LOD System with Subdivide Mesh Node"""
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+    
+    def create_lod_system(
+        self, 
+        terrain_obj: bpy.types.Object, 
+        lod_levels: list = None
+    ) -> bpy.types.Object:
+        """Create LOD system using Subdivide Mesh Node"""
+        try:
+            if lod_levels is None:
+                lod_levels = [1, 2, 3]  # Different subdivision levels
+            
+            # Create LOD node group
+            node_group = self._create_lod_group(
+                f"LODSystem_{terrain_obj.name}",
+                lod_levels
+            )
+            
+            if not node_group:
+                return None
+            
+            # Add Geometry Nodes modifier
+            geom_mod = terrain_obj.modifiers.new(name="LODSystem", type="NODES")
+            geom_mod.node_group = node_group
+            
+            self.logger.info(f"✅ LOD system created: {terrain_obj.name}")
+            return terrain_obj
+            
+        except Exception as e:
+            self.logger.error(f"Error creating LOD system: {e}")
+            return None
+    
+    def _create_lod_group(
+        self, 
+        name: str, 
+        lod_levels: list
+    ) -> bpy.types.GeometryNodeTree:
+        """Create LOD node group with Subdivide Mesh Node"""
+        try:
+            node_group = bpy.data.node_groups.new(name=name, type="GeometryNodeTree")
+            
+            # Add input/output nodes
+            input_node = node_group.nodes.new("NodeGroupInput")
+            output_node = node_group.nodes.new("NodeGroupOutput")
+            
+            # Add LOD nodes
+            subdivide_mesh = node_group.nodes.new("GeometryNodeSubdivideMesh")
+            switch_node = node_group.nodes.new("GeometryNodeSwitch")
+            
+            # Configure subdivision
+            subdivide_mesh.inputs["Level"].default_value = max(lod_levels)
+            
+            # Position nodes
+            input_node.location = (0, 0)
+            subdivide_mesh.location = (200, 0)
+            switch_node.location = (400, 0)
+            output_node.location = (600, 0)
+            
+            # Add output sockets
+            output_node.inputs.new("NodeSocketGeometry", "Geometry")
+            
+            # Connect nodes
+            links = node_group.links
+            links.new(input_node.outputs[0], subdivide_mesh.inputs[0])
+            links.new(subdivide_mesh.outputs[0], switch_node.inputs[0])
+            links.new(switch_node.outputs[0], output_node.inputs[0])
+            
+            self.logger.info(f"✅ LOD node group created: {name}")
+            return node_group
+            
+        except Exception as e:
+            self.logger.error(f"Error creating LOD group: {e}")
+            return None
+
+
+class Blender4PointDistribution:
+    """Blender 4.5.3+ Point Distribution Nodes for vegetation and scattering"""
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+    
+    def create_vegetation_distribution(
+        self, 
+        terrain_obj: bpy.types.Object, 
+        vegetation_density: float = 0.1,
+        vegetation_types: list = None
+    ) -> bpy.types.Object:
+        """Create vegetation distribution using Point Distribution Nodes"""
+        try:
+            if vegetation_types is None:
+                vegetation_types = ["tree", "grass", "rock"]
+            
+            # Create point distribution node group
+            node_group = self._create_point_distribution_group(
+                f"VegetationDistribution_{terrain_obj.name}",
+                vegetation_density,
+                vegetation_types
+            )
+            
+            if not node_group:
+                return None
+            
+            # Add Geometry Nodes modifier
+            geom_mod = terrain_obj.modifiers.new(name="VegetationDistribution", type="NODES")
+            geom_mod.node_group = node_group
+            
+            self.logger.info(f"✅ Vegetation distribution created: {terrain_obj.name}")
+            return terrain_obj
+            
+        except Exception as e:
+            self.logger.error(f"Error creating vegetation distribution: {e}")
+            return None
+    
+    def _create_point_distribution_group(
+        self, 
+        name: str, 
+        density: float, 
+        vegetation_types: list
+    ) -> bpy.types.GeometryNodeTree:
+        """Create point distribution node group for vegetation"""
+        try:
+            node_group = bpy.data.node_groups.new(name=name, type="GeometryNodeTree")
+            
+            # Add input/output nodes
+            input_node = node_group.nodes.new("NodeGroupInput")
+            output_node = node_group.nodes.new("NodeGroupOutput")
+            
+            # Add Point Distribution nodes
+            distribute_points_on_faces = node_group.nodes.new("GeometryNodeDistributePointsOnFaces")
+            instance_on_points = node_group.nodes.new("GeometryNodeInstanceOnPoints")
+            
+            # Configure distribution
+            distribute_points_on_faces.inputs["Density"].default_value = density
+            distribute_points_on_faces.inputs["Seed"].default_value = 42
+            
+            # Position nodes
+            input_node.location = (0, 0)
+            distribute_points_on_faces.location = (200, 0)
+            instance_on_points.location = (400, 0)
+            output_node.location = (600, 0)
+            
+            # Add output sockets
+            output_node.inputs.new("NodeSocketGeometry", "Geometry")
+            
+            # Connect nodes
+            links = node_group.links
+            links.new(input_node.outputs[0], distribute_points_on_faces.inputs[0])
+            links.new(distribute_points_on_faces.outputs[0], instance_on_points.inputs[0])
+            links.new(instance_on_points.outputs[0], output_node.inputs[0])
+            
+            self.logger.info(f"✅ Point distribution node group created: {name}")
+            return node_group
+            
+        except Exception as e:
+            self.logger.error(f"Error creating point distribution group: {e}")
+            return None
 
 
 class Blender4Integration:
@@ -784,6 +983,8 @@ class Blender4Integration:
         self.logger = logging.getLogger(__name__)
         self.topology_nodes = Blender4TopologyNodes()
         self.sample_operations = Blender4SampleOperations()
+        self.point_distribution = Blender4PointDistribution()
+        self.lod_system = Blender4LODSystem()
 
     def create_terrain_object(
         self,
@@ -831,7 +1032,7 @@ class Blender4Integration:
             # Create or get material
             if material_name in bpy.data.materials:
                 material = bpy.data.materials[material_name]
-        else:
+            else:
                 material = bpy.data.materials.new(name=material_name)
                 material.use_nodes = True
 
@@ -891,32 +1092,52 @@ class Blender4Integration:
             bpy.context.view_layer.objects.active = obj
             obj.select_set(True)
 
-            # Use the new Geometry Node Baking operator
-            bpy.ops.object.geometry_node_bake_single()
-
-            self.logger.info(f"✅ Terrain geometry baked successfully: {obj.name}")
-            return True
+            # Check if object has Geometry Nodes modifier
+            geom_mod = None
+            for mod in obj.modifiers:
+                if mod.type == 'NODES':
+                    geom_mod = mod
+                    break
+            
+            if geom_mod:
+                # Use the new Geometry Node Baking operator
+                bpy.ops.object.geometry_node_bake_single()
+                self.logger.info(f"✅ Terrain geometry baked successfully: {obj.name}")
+                return True
+            else:
+                self.logger.warning(f"No Geometry Nodes modifier found on {obj.name}")
+                return False
 
         except Exception as e:
             self.logger.error(f"Error baking terrain geometry: {e}")
-            return False
+            # Fallback: Apply modifiers manually
+            try:
+                bpy.context.view_layer.objects.active = obj
+                for mod in obj.modifiers:
+                    if mod.type == 'NODES':
+                        bpy.ops.object.modifier_apply(modifier=mod.name)
+                self.logger.info(f"✅ Applied Geometry Nodes modifiers manually: {obj.name}")
+                return True
+            except Exception as fallback_e:
+                self.logger.error(f"Fallback baking also failed: {fallback_e}")
+                return False
 
     def create_terrain_with_baking(
-        self, 
-        mesh: trimesh.Trimesh, 
+        self,
+        mesh: trimesh.Trimesh,
         name: str = "terrain",
         material_name: str = "terrain_material",
-        enable_baking: bool = True
+        enable_baking: bool = True,
     ) -> bpy.types.Object:
         """Create terrain object with optional geometry baking"""
         try:
             # Create the basic terrain object
             terrain_obj = self.create_terrain_object(mesh, name, material_name)
-            
+
             if terrain_obj and enable_baking:
                 # Bake the geometry for performance
                 self.bake_terrain_geometry(terrain_obj)
-            
+
             return terrain_obj
 
         except Exception as e:
@@ -986,24 +1207,46 @@ class ModernTerrainEngine:
 
             # 4. Create Blender object with baking
             terrain_obj = self.blender_integration.create_terrain_with_baking(
-                mesh, 
+                mesh,
                 f"{self.config.terrain_type.value}_terrain_{self.config.seed}",
-                enable_baking=self.config.enable_geometry_baking
+                enable_baking=self.config.enable_geometry_baking,
             )
-            
+
             # 4.1. Analyze topology if object was created
             topology_info = {}
             if terrain_obj:
-                topology_info = self.blender_integration.topology_nodes.analyze_mesh_topology(terrain_obj)
-                
+                topology_info = (
+                    self.blender_integration.topology_nodes.analyze_mesh_topology(
+                        terrain_obj
+                    )
+                )
+
                 # 4.2. Enhance terrain detail using sample operations
                 detail_level = "high" if self.config.resolution >= 512 else "medium"
-                self.blender_integration.sample_operations.enhance_terrain_detail(terrain_obj, detail_level)
-                
+                self.blender_integration.sample_operations.enhance_terrain_detail(
+                    terrain_obj, detail_level
+                )
+
                 # 4.3. Add erosion effects for natural terrain
-                if self.config.terrain_type in [TerrainType.MOUNTAIN, TerrainType.HILLS]:
-                    erosion_strength = 0.3 if self.config.terrain_type == TerrainType.MOUNTAIN else 0.2
-                    self.blender_integration.sample_operations.add_terrain_erosion(terrain_obj, erosion_strength)
+                if self.config.terrain_type in [
+                    TerrainType.MOUNTAIN,
+                    TerrainType.HILLS,
+                ]:
+                    erosion_strength = (
+                        0.3 if self.config.terrain_type == TerrainType.MOUNTAIN else 0.2
+                    )
+                    self.blender_integration.sample_operations.add_terrain_erosion(
+                        terrain_obj, erosion_strength
+                    )
+                
+                # 4.4. Add LOD system for performance
+                self.blender_integration.lod_system.create_lod_system(terrain_obj)
+                
+                # 4.5. Add vegetation distribution
+                vegetation_density = 0.05 if self.config.terrain_type == TerrainType.MOUNTAIN else 0.1
+                self.blender_integration.point_distribution.create_vegetation_distribution(
+                    terrain_obj, vegetation_density
+                )
 
             # 5. Store in DuckDB if enabled
             if self.spatial_manager:
@@ -1013,8 +1256,11 @@ class ModernTerrainEngine:
                     "resolution": self.config.resolution,
                     "generation_time": time.time() - start_time,
                 }
+                # Use proper JSON serialization
+                import json
+                metadata_json = json.dumps(metadata)
                 self.spatial_manager.store_terrain_data(
-                    f"terrain_{self.config.seed}", height_map, bounds, metadata
+                    f"terrain_{self.config.seed}", height_map, bounds, metadata_json
                 )
 
             generation_time = time.time() - start_time
@@ -1181,9 +1427,12 @@ class ModernTerrainEngine:
                 graph_data, enhancement_type="smoothing"
             )
 
-            # Convert back to heightmap
+            # Convert back to heightmap with proper detach
             h, w = height_map.shape
-            enhanced_heights = enhanced_graph.height.cpu().numpy()
+            if enhanced_graph.height.requires_grad:
+                enhanced_heights = enhanced_graph.height.detach().cpu().numpy()
+            else:
+                enhanced_heights = enhanced_graph.height.cpu().numpy()
             enhanced_height_map = enhanced_heights.reshape(h, w)
 
             return enhanced_height_map
