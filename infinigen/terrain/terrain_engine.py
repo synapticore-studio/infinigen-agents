@@ -496,6 +496,156 @@ class DuckDBSpatialManager:
             return []
 
 
+class Blender4SampleOperations:
+    """Blender 4.5.3+ Sample Operations for terrain detail enhancement"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def create_sample_operations_node_group(self, name: str = "TerrainSampleOps") -> bpy.types.GeometryNodeTree:
+        """Create a Geometry Node group with sample operations"""
+        try:
+            # Create node group
+            node_group = bpy.data.node_groups.new(name=name, type="GeometryNodeTree")
+            
+            # Add input/output nodes
+            input_node = node_group.nodes.new("NodeGroupInput")
+            output_node = node_group.nodes.new("NodeGroupOutput")
+            
+            # Add sample operation nodes
+            sample_index = node_group.nodes.new("GeometryNodeSampleIndex")
+            sample_nearest = node_group.nodes.new("GeometryNodeSampleNearest")
+            sample_nearest_surface = node_group.nodes.new("GeometryNodeSampleNearestSurface")
+            raycast = node_group.nodes.new("GeometryNodeRaycast")
+            sample_uv_surface = node_group.nodes.new("GeometryNodeSampleUVSurface")
+            
+            # Position nodes
+            input_node.location = (0, 0)
+            sample_index.location = (200, 300)
+            sample_nearest.location = (200, 200)
+            sample_nearest_surface.location = (200, 100)
+            raycast.location = (200, 0)
+            sample_uv_surface.location = (200, -100)
+            output_node.location = (600, 0)
+            
+            # Connect nodes
+            links = node_group.links
+            links.new(input_node.outputs[0], sample_index.inputs[0])
+            links.new(input_node.outputs[0], sample_nearest.inputs[0])
+            links.new(input_node.outputs[0], sample_nearest_surface.inputs[0])
+            links.new(input_node.outputs[0], raycast.inputs[0])
+            links.new(input_node.outputs[0], sample_uv_surface.inputs[0])
+            
+            # Connect to output
+            links.new(sample_index.outputs[0], output_node.inputs[0])
+            links.new(sample_nearest.outputs[0], output_node.inputs[1])
+            links.new(sample_nearest_surface.outputs[0], output_node.inputs[2])
+            links.new(raycast.outputs[0], output_node.inputs[3])
+            links.new(sample_uv_surface.outputs[0], output_node.inputs[4])
+            
+            self.logger.info(f"✅ Sample operations node group created: {name}")
+            return node_group
+            
+        except Exception as e:
+            self.logger.error(f"Error creating sample operations node group: {e}")
+            return None
+    
+    def enhance_terrain_detail(self, terrain_obj: bpy.types.Object, detail_level: str = "medium") -> bool:
+        """Enhance terrain detail using sample operations"""
+        try:
+            # Create sample operations node group
+            sample_group = self.create_sample_operations_node_group(f"TerrainDetail_{terrain_obj.name}")
+            
+            if not sample_group:
+                return False
+            
+            # Add Geometry Nodes modifier
+            geom_mod = terrain_obj.modifiers.new(name="TerrainDetail", type="NODES")
+            geom_mod.node_group = sample_group
+            
+            # Configure detail level
+            if detail_level == "high":
+                # High detail: more subdivisions and sample operations
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.mesh.subdivide(number_cuts=2)
+                bpy.ops.object.mode_set(mode='OBJECT')
+            elif detail_level == "low":
+                # Low detail: minimal processing
+                pass
+            else:  # medium
+                # Medium detail: moderate subdivisions
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.mesh.subdivide(number_cuts=1)
+                bpy.ops.object.mode_set(mode='OBJECT')
+            
+            self.logger.info(f"✅ Terrain detail enhanced: {terrain_obj.name} ({detail_level})")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error enhancing terrain detail: {e}")
+            return False
+    
+    def add_terrain_erosion(self, terrain_obj: bpy.types.Object, erosion_strength: float = 0.5) -> bool:
+        """Add erosion effects using sample operations"""
+        try:
+            # Create erosion node group
+            erosion_group = self._create_erosion_node_group(f"TerrainErosion_{terrain_obj.name}")
+            
+            if not erosion_group:
+                return False
+            
+            # Add Geometry Nodes modifier
+            geom_mod = terrain_obj.modifiers.new(name="TerrainErosion", type="NODES")
+            geom_mod.node_group = erosion_group
+            
+            # Configure erosion strength
+            if hasattr(geom_mod, 'node_group') and geom_mod.node_group:
+                # Find the erosion strength input
+                for node in geom_mod.node_group.nodes:
+                    if node.bl_idname == "ShaderNodeValue" and "strength" in node.name.lower():
+                        node.outputs[0].default_value = erosion_strength
+                        break
+            
+            self.logger.info(f"✅ Terrain erosion added: {terrain_obj.name} (strength: {erosion_strength})")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error adding terrain erosion: {e}")
+            return False
+    
+    def _create_erosion_node_group(self, name: str) -> bpy.types.GeometryNodeTree:
+        """Create erosion-specific node group"""
+        try:
+            node_group = bpy.data.node_groups.new(name=name, type="GeometryNodeTree")
+            
+            # Add input/output nodes
+            input_node = node_group.nodes.new("NodeGroupInput")
+            output_node = node_group.nodes.new("NodeGroupOutput")
+            
+            # Add erosion nodes
+            noise_texture = node_group.nodes.new("ShaderNodeTexNoise")
+            math_multiply = node_group.nodes.new("ShaderNodeMath")
+            math_multiply.operation = 'MULTIPLY'
+            
+            # Position nodes
+            input_node.location = (0, 0)
+            noise_texture.location = (200, 0)
+            math_multiply.location = (400, 0)
+            output_node.location = (600, 0)
+            
+            # Connect nodes
+            links = node_group.links
+            links.new(input_node.outputs[0], noise_texture.inputs[0])
+            links.new(noise_texture.outputs[0], math_multiply.inputs[0])
+            links.new(math_multiply.outputs[0], output_node.inputs[0])
+            
+            return node_group
+            
+        except Exception as e:
+            self.logger.error(f"Error creating erosion node group: {e}")
+            return None
+
+
 class Blender4TopologyNodes:
     """Blender 4.5.3+ Topology Nodes for advanced mesh operations"""
     
@@ -633,6 +783,7 @@ class Blender4Integration:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.topology_nodes = Blender4TopologyNodes()
+        self.sample_operations = Blender4SampleOperations()
 
     def create_terrain_object(
         self,
@@ -680,7 +831,7 @@ class Blender4Integration:
             # Create or get material
             if material_name in bpy.data.materials:
                 material = bpy.data.materials[material_name]
-            else:
+        else:
                 material = bpy.data.materials.new(name=material_name)
                 material.use_nodes = True
 
@@ -844,6 +995,15 @@ class ModernTerrainEngine:
             topology_info = {}
             if terrain_obj:
                 topology_info = self.blender_integration.topology_nodes.analyze_mesh_topology(terrain_obj)
+                
+                # 4.2. Enhance terrain detail using sample operations
+                detail_level = "high" if self.config.resolution >= 512 else "medium"
+                self.blender_integration.sample_operations.enhance_terrain_detail(terrain_obj, detail_level)
+                
+                # 4.3. Add erosion effects for natural terrain
+                if self.config.terrain_type in [TerrainType.MOUNTAIN, TerrainType.HILLS]:
+                    erosion_strength = 0.3 if self.config.terrain_type == TerrainType.MOUNTAIN else 0.2
+                    self.blender_integration.sample_operations.add_terrain_erosion(terrain_obj, erosion_strength)
 
             # 5. Store in DuckDB if enabled
             if self.spatial_manager:
