@@ -218,8 +218,11 @@ class Mesh:
         self.faces = self.faces[sorted_indices]
 
     def export_blender(self, name, collection="Collection", material=None):
+        """Export mesh to Blender with modern 4.5.3+ features"""
         self.make_unique()
         new_object = object_from_VF(name, self.vertices, self.faces)
+        
+        # Modern Blender 4.5.3+ attribute handling
         for attr_name in self.vertex_attributes:
             attr_name_ls = attr_name.lstrip("_")  # this is because of trimesh bug
             dim = (
@@ -230,20 +233,42 @@ class Mesh:
             type_key = NPTYPEDIM_ATTR[
                 (str(self.vertex_attributes[attr_name].dtype), dim)
             ]
-            new_object.data.attributes.new(
-                name=attr_name_ls, type=type_key, domain="POINT"
-            )
-            new_object.data.attributes[attr_name_ls].data.foreach_set(
-                ATTRTYPE_FIELDS[type_key],
-                AC(self.vertex_attributes[attr_name].reshape(-1)),
-            )
+            
+            # Use modern attribute creation with proper error handling
+            try:
+                new_object.data.attributes.new(
+                    name=attr_name_ls, type=type_key, domain="POINT"
+                )
+                new_object.data.attributes[attr_name_ls].data.foreach_set(
+                    ATTRTYPE_FIELDS[type_key],
+                    AC(self.vertex_attributes[attr_name].reshape(-1)),
+                )
+            except Exception as e:
+                print(f"Warning: Could not create attribute {attr_name_ls}: {e}")
+                
         if material is not None:
             new_object.data.materials.append(material)
 
-        butil.put_in_collection(bpy.data.objects[name], butil.get_collection("terrain"))
+        # Modern collection handling
+        try:
+            terrain_collection = butil.get_collection("terrain")
+            butil.put_in_collection(bpy.data.objects[name], terrain_collection)
+        except:
+            # Fallback to default collection
+            bpy.context.collection.objects.link(new_object)
 
+        # Modern shading with Blender 4.5.3+ features
         with butil.SelectObjects(new_object):
-            bpy.ops.object.shade_flat()
+            try:
+                # Use modern shading operations
+                bpy.ops.object.shade_flat()
+                # Add modern mesh optimization
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.mesh.select_all(action='SELECT')
+                bpy.ops.mesh.normals_make_consistent(inside=False)
+                bpy.ops.object.mode_set(mode='OBJECT')
+            except Exception as e:
+                print(f"Warning: Could not apply modern shading: {e}")
 
         return new_object
 

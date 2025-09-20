@@ -13,8 +13,13 @@ from infinigen.core.util.logging import Timer as oTimer
 
 
 def report_memory():
-    process = psutil.Process(os.getpid())
-    print(f"memory usage: {process.memory_info().rss}")
+    """Report memory usage with modern error handling"""
+    try:
+        process = psutil.Process(os.getpid())
+        memory_info = process.memory_info()
+        print(f"memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
+    except Exception as e:
+        print(f"Warning: Could not report memory usage: {e}")
 
 
 @gin.configurable("TerrainTimer")

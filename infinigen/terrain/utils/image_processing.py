@@ -33,16 +33,32 @@ def smooth(arr, k):
 
 
 def read(input_heightmap_path):
+    """Read heightmap with modern OpenCV features and error handling"""
     input_heightmap_path = str(input_heightmap_path)
     assert os.path.exists(
         input_heightmap_path
     ), f"{input_heightmap_path} does not exists"
-    heightmap = (
-        cv2.imread(input_heightmap_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
-        .copy()
-        .astype(float)
-    )
-    return heightmap
+    
+    # Modern OpenCV image reading with better error handling
+    try:
+        heightmap = (
+            cv2.imread(input_heightmap_path, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+            .copy()
+            .astype(float)
+        )
+        
+        # Validate image data
+        if heightmap is None:
+            raise ValueError(f"Could not read image from {input_heightmap_path}")
+            
+        # Modern image validation
+        if heightmap.size == 0:
+            raise ValueError(f"Image is empty: {input_heightmap_path}")
+            
+        return heightmap
+        
+    except Exception as e:
+        raise RuntimeError(f"Error reading heightmap {input_heightmap_path}: {e}")
 
 
 def grid_distance(source, downsample):

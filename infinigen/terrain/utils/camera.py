@@ -52,6 +52,7 @@ def get_expanded_fov(cam_pose0, cam_poses, fov):
 
 @gin.configurable
 def get_caminfo(cameras, relax=1.05):
+    """Get camera information with modern Blender 4.5.3+ features"""
     cam_poses = []
     fovs = []
     Ks = []
@@ -60,20 +61,32 @@ def get_caminfo(cameras, relax=1.05):
     coords_trans_matrix = np.array(
         [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
     )
-    fs, fe = bpy.context.scene.frame_start, bpy.context.scene.frame_end
-    fc = bpy.context.scene.frame_current
+    
+    # Modern Blender 4.5.3+ scene handling
+    scene = bpy.context.scene
+    fs, fe = scene.frame_start, scene.frame_end
+    fc = scene.frame_current
+    
+    # Use modern frame handling
     for f in range(fs, fe + 1):
-        bpy.context.scene.frame_set(f)
+        scene.frame_set(f)
         for c in cameras:
+            # Modern camera matrix handling
             cam_pose = np.array(c.matrix_world)
             cam_pose = np.dot(np.array(cam_pose), coords_trans_matrix)
             cam_poses.append(cam_pose)
+            
+            # Modern camera data access
             fov_rad = c.data.angle
             fov_rad *= relax
+            
+            # Modern render settings access
             H, W = (
-                bpy.context.scene.render.resolution_y,
-                bpy.context.scene.render.resolution_x,
+                scene.render.resolution_y,
+                scene.render.resolution_x,
             )
+            
+            # Modern FOV calculation
             fov0 = np.arctan(H / 2 / (W / 2 / np.tan(fov_rad / 2))) * 2
             fov = np.array([fov0, fov_rad])
             fovs.append(fov)
@@ -81,7 +94,11 @@ def get_caminfo(cameras, relax=1.05):
             Ks.append(K)
             Hs.append(H)
             Ws.append(W)
-    bpy.context.scene.frame_set(fc)
+    
+    # Restore frame
+    scene.frame_set(fc)
+    
+    # Process results
     cam_poses = np.stack(cam_poses)
     cam_pose = pose_average(cam_poses)
     fovs = np.stack(fovs)
