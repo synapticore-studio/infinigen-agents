@@ -53,10 +53,11 @@ dependencies = [
     "pydantic-graph>=0.1.0",
     "duckdb[extensions]>=1.4.0",
     "sentence-transformers>=5.1.0",
-    "torch>=2.8.0",
-    "torch-geometric>=2.7.0",  # Updated for better compatibility
-    "torch-scatter>=2.2.0",    # Updated for PyTorch 2.8 compatibility
-    "torch-sparse>=0.7.0",     # Updated for PyTorch 2.8 compatibility
+    # PyTorch dependencies moved to optional to avoid build issues
+    # "torch>=2.0.0",
+    # "torch-geometric>=2.4.0",
+    # "torch-scatter>=2.1.0", 
+    # "torch-sparse>=0.6.0",
     "kernels>=0.10.1",
     "overpy>=0.7",
     "requests>=2.32.4",
@@ -67,6 +68,12 @@ terrain = [
     "landlab>=2.6.0",      # Updated to allow newer versions
     "pyrender>=0.1.45",    # Updated for better Blender 4.5.3 compatibility
     "setuptools>=75.0.0"   # Updated for modern Python packaging
+]
+pytorch = [
+    "torch>=2.0.0",
+    "torch-geometric>=2.4.0",
+    "torch-scatter>=2.1.0", 
+    "torch-sparse>=0.6.0"
 ]
 vis = [
     "einops>=0.8.0",       # Updated for better tensor operations
