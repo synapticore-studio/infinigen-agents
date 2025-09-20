@@ -40,41 +40,57 @@ dependencies = [
     "rtree",
     # Advanced features - all working on Windows
     "scikit-image>=0.25.0", # Newer version with pre-compiled wheels
-    "scikit-learn<1.4.0",
-    "bpy>=4.4.0", # Updated to latest Blender version
+    "scikit-learn<1.4.0", # Updated to latest Blender version
     "coacd",
     # Modern visualization - replacing matplotlib
     "plotly>=6.2.0",
     "altair>=5.5.0",
     "pillow>=10.0.0",
+    "kaleido>=1.0.0",
+    "bpy>=4.5.3",
+    "mcp>=1.13.1",
+    "pydantic-ai>=1.0.8",
+    "pydantic-graph>=0.1.0",
+    "duckdb[extensions]>=1.4.0",
+    "sentence-transformers>=5.1.0",
+    "torch>=2.8.0",
+    "torch-geometric>=2.7.0",  # Updated for better compatibility
+    "torch-scatter>=2.2.0",    # Updated for PyTorch 2.8 compatibility
+    "torch-sparse>=0.7.0",     # Updated for PyTorch 2.8 compatibility
+    "kernels>=0.10.1",
+    "overpy>=0.7",
+    "requests>=2.32.4",
 ]
 
 [project.optional-dependencies]
 terrain = [
-    "landlab==2.6.0",
-    "pyrender<0.2.0",
-    "setuptools"
+    "landlab>=2.6.0",      # Updated to allow newer versions
+    "pyrender>=0.1.45",    # Updated for better Blender 4.5.3 compatibility
+    "setuptools>=75.0.0"   # Updated for modern Python packaging
 ]
 vis = [
-    "einops",
-    "flow_vis",
-    "numba",
-    "pyglet<2"
+    "einops>=0.8.0",       # Updated for better tensor operations
+    "flow_vis>=0.1.0",     # Updated version
+    "numba>=0.60.0",       # Updated for better performance
+    "pyglet>=2.0.0"        # Updated to modern version (removed restriction)
 ]
 dev = [
-    "pytest",
-    "pytest-cov",
-    "pytest-xdist",
-    "pytest-timeout",
-    "ruff",
-    "isort",
-    "tabulate",
-    "rapidfuzz",
-    "pre-commit"
+    "pytest>=8.0.0",       # Updated to modern version
+    "pytest-cov>=6.0.0",   # Updated version
+    "pytest-xdist>=3.6.0", # Updated for parallel testing
+    "pytest-timeout>=2.4.0", # Updated version
+    "ruff>=0.8.0",          # Updated to latest version
+    "isort>=5.14.0",        # Updated version
+    "tabulate>=0.9.0",      # Updated version
+    "rapidfuzz>=3.10.0",    # Updated version
+    "pre-commit>=4.0.0"     # Updated to modern version
 ]
 wandb = [
-    "wandb"
+    "wandb>=0.18.0"         # Updated to modern version
 ]
+
+[tool.uv]
+link-mode = "copy"
 
 [tool.setuptools]
 include-package-data = false
