@@ -144,9 +144,15 @@ class Terrain:
         """Erstelle moderne Terrain-Engine direkt"""
         try:
             # Importiere moderne Engine-Komponenten
-            from infinigen.terrain.terrain_engine import InfinigenTerrainEngine
+            from infinigen.terrain.terrain_engine import ModernTerrainEngine, TerrainConfig
 
-            return InfinigenTerrainEngine(device=self.device)
+            config = TerrainConfig(
+                terrain_type="mountain",  # Default terrain type
+                resolution=128,  # Coarse resolution
+                seed=self.seed,
+                enable_advanced_features=True,
+            )
+            return ModernTerrainEngine(config=config, device=self.device)
         except Exception as e:
             logger.error(f"Error creating modern engine: {e}")
             return None
@@ -161,16 +167,11 @@ class Terrain:
                     "Terrain engine not available - cannot generate terrain!"
                 )
 
-            # Bestimme Terrain-Typ
-            terrain_type = "hills"  # Einfaches Terrain für Coarse
+            # Generiere Terrain mit moderner Engine
+            result = self.terrain_engine.generate_terrain()
 
-            # Generiere Terrain
-            result = self.terrain_engine.generate_terrain(
-                terrain_type=terrain_type, seed=self.seed, resolution=128
-            )
-
-            if result["success"] and result["terrain_mesh"]:
-                terrain_mesh = result["terrain_mesh"]
+            if result["success"] and result["terrain_object"]:
+                terrain_mesh = result["terrain_object"]
                 # Tagging für Kompatibilität
                 tag_object(terrain_mesh, Tags.Terrain)
                 self.terrain_mesh = terrain_mesh
@@ -200,16 +201,15 @@ class Terrain:
                     "Terrain engine not available - cannot generate terrain!"
                 )
 
-            # Bestimme Terrain-Typ
-            terrain_type = "mountain"  # Komplexeres Terrain für Fine
+            # Update config for fine terrain
+            self.terrain_engine.config.terrain_type = "mountain"  # Complex terrain for Fine
+            self.terrain_engine.config.resolution = 512  # Higher resolution
 
-            # Generiere Terrain
-            result = self.terrain_engine.generate_terrain(
-                terrain_type=terrain_type, seed=self.seed, resolution=512
-            )
+            # Generiere Terrain mit moderner Engine
+            result = self.terrain_engine.generate_terrain()
 
-            if result["success"] and result["terrain_mesh"]:
-                terrain_mesh = result["terrain_mesh"]
+            if result["success"] and result["terrain_object"]:
+                terrain_mesh = result["terrain_object"]
                 # Tagging für Kompatibilität
                 tag_object(terrain_mesh, Tags.Terrain)
                 self.terrain_mesh = terrain_mesh

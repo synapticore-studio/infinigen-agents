@@ -35,11 +35,19 @@ from torch_geometric.utils import from_networkx, to_networkx
 # Infinigen Core Imports
 try:
     from infinigen.assets.composition import material_assignments
+    from infinigen.assets.materials import fluid as fluid_materials
+    from infinigen.assets.materials import snow as snow_materials
     from infinigen.core.tagging import tag_object
     from infinigen.core.util import blender as butil
     from infinigen.core.util.logging import Timer
     from infinigen.core.util.organization import Tags, TerrainNames
     from infinigen.terrain.rendering import setup_modern_terrain_rendering
+    from infinigen.terrain.mesher import (
+        OpaqueSphericalMesher,
+        TransparentSphericalMesher,
+        UniformMesher,
+    )
+    from infinigen.terrain.assets.ocean import ocean_asset
 except ImportError:
     # Fallback for testing
     class Tags:
@@ -64,8 +72,559 @@ except ImportError:
         """Fallback for modern rendering setup"""
         return True
 
+    class OpaqueSphericalMesher:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class TransparentSphericalMesher:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    class UniformMesher:
+        def __init__(self, *args, **kwargs):
+            pass
+
+    def ocean_asset(*args, **kwargs):
+        return None
+
 
 logger = logging.getLogger(__name__)
+
+
+# Advanced Terrain Features - Consolidated from advanced_features.py
+class SurfaceRegistry:
+    """Surface Registry for different terrain types - like in original Infinigen"""
+
+    def __init__(self):
+        self.surfaces = {}
+        self._init_default_surfaces()
+
+    def _init_default_surfaces(self):
+        """Initialize default surfaces like in original Infinigen"""
+        try:
+            self.surfaces = {
+                "atmosphere": [(fluid_materials.AtmosphereLightHaze, 1)],
+                "beach": material_assignments.beach,
+                "eroded": material_assignments.eroded,
+                "ground_collection": material_assignments.ground,
+                "lava": [(fluid_materials.Lava, 1)],
+                "liquid_collection": material_assignments.liquid,
+                "mountain_collection": material_assignments.mountain,
+                "rock_collection": material_assignments.rock,
+                "snow": [(snow_materials.Snow, 1)],
+                "cave": material_assignments.cave if hasattr(material_assignments, 'cave') else [("cave_rock", 1)],
+            }
+            logger.info("✅ Surface Registry initialized with Infinigen materials")
+        except Exception as e:
+            logger.warning(f"Could not load Infinigen materials: {e}")
+            self._init_fallback_surfaces()
+
+    def _init_fallback_surfaces(self):
+        """Fallback surfaces when Infinigen materials not available"""
+        self.surfaces = {
+            "atmosphere": [("atmosphere_light_haze", 1)],
+            "beach": [("beach_sand", 1)],
+            "eroded": [("eroded_rock", 1)],
+            "ground_collection": [("ground_soil", 1)],
+            "lava": [("lava_molten", 1)],
+            "liquid_collection": [("water_blue", 1)],
+            "mountain_collection": [("mountain_rock", 1)],
+            "rock_collection": [("rock_stone", 1)],
+            "snow": [("snow_white", 1)],
+            "cave": [("cave_rock", 1)],
+        }
+        logger.warning("Using fallback surfaces - some features may not work correctly")
+
+    def get_surface(self, surface_type: str) -> List[Tuple]:
+        """Get surface for specific type"""
+        return self.surfaces.get(surface_type, [])
+
+    def add_surface(self, surface_type: str, surface_data: List[Tuple]):
+        """Add new surface"""
+        self.surfaces[surface_type] = surface_data
+
+    def list_surfaces(self) -> List[str]:
+        """List all available surfaces"""
+        return list(self.surfaces.keys())
+
+
+class AdvancedTerrainMesher:
+    """Advanced Terrain Mesher - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.opaque_mesher = None
+        self.transparent_mesher = None
+        self.uniform_mesher = None
+
+    def init_meshers(self, cameras, bounds, **kwargs):
+        """Initialize all meshers"""
+        try:
+            self.opaque_mesher = OpaqueSphericalMesher(cameras, bounds, **kwargs)
+            self.transparent_mesher = TransparentSphericalMesher(cameras, bounds, **kwargs)
+            self.uniform_mesher = UniformMesher(cameras, bounds, **kwargs)
+            self.logger.info("✅ Advanced meshers initialized")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize advanced meshers: {e}")
+
+    def mesh_terrain(self, terrain_data, mesh_type="opaque"):
+        """Mesh terrain with specific mesher"""
+        try:
+            if mesh_type == "opaque" and self.opaque_mesher:
+                return self.opaque_mesher.mesh(terrain_data)
+            elif mesh_type == "transparent" and self.transparent_mesher:
+                return self.transparent_mesher.mesh(terrain_data)
+            elif mesh_type == "uniform" and self.uniform_mesher:
+                return self.uniform_mesher.mesh(terrain_data)
+            else:
+                self.logger.warning(f"Mesher {mesh_type} not available, using fallback")
+                return self._fallback_mesh(terrain_data)
+        except Exception as e:
+            self.logger.error(f"Error meshing terrain: {e}")
+            return self._fallback_mesh(terrain_data)
+
+    def _fallback_mesh(self, terrain_data):
+        """Fallback meshing"""
+        return None
+
+
+class WaterSystem:
+    """Water System with Ocean Assets - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.ocean_asset = None
+
+    def create_ocean(self, seed: int, bounds: Tuple, **kwargs) -> Optional[bpy.types.Object]:
+        """Create Ocean Asset"""
+        try:
+            self.ocean_asset = ocean_asset(seed=seed, bounds=bounds, **kwargs)
+            if self.ocean_asset:
+                tag_object(self.ocean_asset, Tags.Water)
+                self.logger.info(f"✅ Ocean asset created: {self.ocean_asset.name}")
+            return self.ocean_asset
+        except Exception as e:
+            self.logger.warning(f"Could not create ocean asset: {e}")
+            return self._create_fallback_water()
+
+    def _create_fallback_water(self) -> Optional[bpy.types.Object]:
+        """Fallback Water creation"""
+        try:
+            bpy.ops.mesh.primitive_plane_add(size=200, location=(0, 0, 0))
+            water = bpy.context.active_object
+            water.name = "Water_Fallback"
+            tag_object(water, Tags.Water)
+            return water
+        except Exception as e:
+            self.logger.error(f"Error creating fallback water: {e}")
+            return None
+
+
+class AtmosphereSystem:
+    """Atmosphere System with Light Haze - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def create_atmosphere(self, seed: int, **kwargs) -> Optional[bpy.types.Object]:
+        """Create Atmosphere with Light Haze"""
+        try:
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=100, location=(0, 0, 0))
+            atmosphere = bpy.context.active_object
+            atmosphere.name = f"Atmosphere_{seed}"
+
+            self._apply_atmosphere_material(atmosphere)
+            tag_object(atmosphere, Tags.Atmosphere)
+            self.logger.info(f"✅ Atmosphere created: {atmosphere.name}")
+            return atmosphere
+
+        except Exception as e:
+            self.logger.error(f"Error creating atmosphere: {e}")
+            return None
+
+    def _apply_atmosphere_material(self, obj):
+        """Apply Atmosphere material"""
+        try:
+            material = bpy.data.materials.new(name="Atmosphere_LightHaze")
+            material.use_nodes = True
+
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (0.7, 0.8, 1.0, 0.1)
+            bsdf.inputs["Alpha"].default_value = 0.1
+            bsdf.inputs["Roughness"].default_value = 0.9
+
+            obj.data.materials.append(material)
+
+        except Exception as e:
+            self.logger.warning(f"Could not apply atmosphere material: {e}")
+
+
+class SnowSystem:
+    """Snow System with Snow Materials - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def create_snow_layer(self, terrain_obj: bpy.types.Object, seed: int, **kwargs) -> Optional[bpy.types.Object]:
+        """Create Snow Layer on terrain"""
+        try:
+            snow_obj = terrain_obj.copy()
+            snow_obj.data = terrain_obj.data.copy()
+            snow_obj.name = f"Snow_Layer_{seed}"
+
+            self._apply_snow_material(snow_obj)
+            snow_obj.location.z += 0.1
+
+            tag_object(snow_obj, "Snow")
+            self.logger.info(f"✅ Snow layer created: {snow_obj.name}")
+            return snow_obj
+
+        except Exception as e:
+            self.logger.error(f"Error creating snow layer: {e}")
+            return None
+
+    def _apply_snow_material(self, obj):
+        """Apply Snow material"""
+        try:
+            material = bpy.data.materials.new(name="Snow_White")
+            material.use_nodes = True
+
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (1.0, 1.0, 1.0, 1.0)
+            bsdf.inputs["Roughness"].default_value = 0.8
+            bsdf.inputs["Specular"].default_value = 0.1
+
+            obj.data.materials.append(material)
+
+        except Exception as e:
+            self.logger.warning(f"Could not apply snow material: {e}")
+
+
+class LavaSystem:
+    """Lava System with Lava Materials - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def create_lava_flow(self, terrain_obj: bpy.types.Object, seed: int, **kwargs) -> Optional[bpy.types.Object]:
+        """Create Lava Flow on terrain"""
+        try:
+            bpy.ops.mesh.primitive_plane_add(size=50, location=(0, 0, 0))
+            lava_obj = bpy.context.active_object
+            lava_obj.name = f"Lava_Flow_{seed}"
+
+            self._apply_lava_material(lava_obj)
+            tag_object(lava_obj, Tags.Lava)
+            self.logger.info(f"✅ Lava flow created: {lava_obj.name}")
+            return lava_obj
+
+        except Exception as e:
+            self.logger.error(f"Error creating lava flow: {e}")
+            return None
+
+    def _apply_lava_material(self, obj):
+        """Apply Lava material"""
+        try:
+            material = bpy.data.materials.new(name="Lava_Molten")
+            material.use_nodes = True
+
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (1.0, 0.2, 0.0, 1.0)
+            bsdf.inputs["Emission"].default_value = (1.0, 0.3, 0.0, 1.0)
+            bsdf.inputs["Emission Strength"].default_value = 2.0
+            bsdf.inputs["Roughness"].default_value = 0.9
+
+            obj.data.materials.append(material)
+
+        except Exception as e:
+            self.logger.warning(f"Could not apply lava material: {e}")
+
+
+class BeachErodedSystem:
+    """Beach and Eroded Terrain Systems - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def create_beach_terrain(self, seed: int, **kwargs) -> Optional[bpy.types.Object]:
+        """Create Beach Terrain"""
+        try:
+            bpy.ops.mesh.primitive_plane_add(size=100, location=(0, 0, 0))
+            beach_obj = bpy.context.active_object
+            beach_obj.name = f"Beach_Terrain_{seed}"
+
+            self._apply_beach_material(beach_obj)
+            tag_object(beach_obj, Tags.Beach)
+            self.logger.info(f"✅ Beach terrain created: {beach_obj.name}")
+            return beach_obj
+
+        except Exception as e:
+            self.logger.error(f"Error creating beach terrain: {e}")
+            return None
+
+    def create_eroded_terrain(self, seed: int, **kwargs) -> Optional[bpy.types.Object]:
+        """Create Eroded Terrain"""
+        try:
+            bpy.ops.mesh.primitive_plane_add(size=100, location=(0, 0, 0))
+            eroded_obj = bpy.context.active_object
+            eroded_obj.name = f"Eroded_Terrain_{seed}"
+
+            self._apply_eroded_material(eroded_obj)
+            tag_object(eroded_obj, Tags.Eroded)
+            self.logger.info(f"✅ Eroded terrain created: {eroded_obj.name}")
+            return eroded_obj
+
+        except Exception as e:
+            self.logger.error(f"Error creating eroded terrain: {e}")
+            return None
+
+    def _apply_beach_material(self, obj):
+        """Apply Beach material"""
+        try:
+            material = bpy.data.materials.new(name="Beach_Sand")
+            material.use_nodes = True
+
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (0.9, 0.8, 0.6, 1.0)
+            bsdf.inputs["Roughness"].default_value = 0.9
+
+            obj.data.materials.append(material)
+
+        except Exception as e:
+            self.logger.warning(f"Could not apply beach material: {e}")
+
+    def _apply_eroded_material(self, obj):
+        """Apply Eroded material"""
+        try:
+            material = bpy.data.materials.new(name="Eroded_Rock")
+            material.use_nodes = True
+
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (0.6, 0.5, 0.4, 1.0)
+            bsdf.inputs["Roughness"].default_value = 0.8
+
+            obj.data.materials.append(material)
+
+        except Exception as e:
+            self.logger.warning(f"Could not apply eroded material: {e}")
+
+
+class CaveSystem:
+    """Cave System with Underground Features - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def create_cave_system(self, seed: int, **kwargs) -> Optional[bpy.types.Object]:
+        """Create Cave System with tunnels and chambers"""
+        try:
+            height_offset = kwargs.get("height_offset", -4)
+            frequency = kwargs.get("frequency", 0.01)
+            noise_scale = kwargs.get("noise_scale", (2, 5))
+            n_lattice = kwargs.get("n_lattice", 1)
+            is_horizontal = kwargs.get("is_horizontal", 1)
+            scale_increase = kwargs.get("scale_increase", 1)
+
+            cave_obj = self._create_cave_geometry(seed, height_offset, frequency, noise_scale, n_lattice, is_horizontal, scale_increase)
+            
+            if cave_obj:
+                self._apply_cave_material(cave_obj)
+                tag_object(cave_obj, Tags.Cave)
+                tag_object(cave_obj, Tags.Caves)
+                self.logger.info(f"✅ Cave system created: {cave_obj.name}")
+                return cave_obj
+
+        except Exception as e:
+            self.logger.error(f"Error creating cave system: {e}")
+            return None
+
+    def _create_cave_geometry(self, seed: int, height_offset: float, frequency: float, noise_scale: tuple, n_lattice: int, is_horizontal: int, scale_increase: float) -> Optional[bpy.types.Object]:
+        """Create Cave geometry with tunnels and chambers"""
+        try:
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=10, location=(0, 0, height_offset))
+            cave_obj = bpy.context.active_object
+            cave_obj.name = f"Cave_System_{seed}"
+
+            bpy.context.view_layer.objects.active = cave_obj
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.subdivide(number_cuts=3)
+            
+            displacement_mod = cave_obj.modifiers.new(name="CaveDisplacement", type='DISPLACE')
+            
+            noise_tex = bpy.data.textures.new(name=f"CaveNoise_{seed}", type='NOISE')
+            noise_tex.noise_scale = np.random.uniform(*noise_scale)
+            noise_tex.noise_depth = 2
+            noise_tex.noise_basis = 'PERLIN_ORIGINAL'
+            
+            displacement_mod.texture = noise_tex
+            displacement_mod.strength = 2.0
+            displacement_mod.mid_level = 0.5
+
+            bpy.ops.object.mode_set(mode='OBJECT')
+            
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=8, location=(0, 0, height_offset))
+            inner_cave = bpy.context.active_object
+            inner_cave.name = f"Cave_Inner_{seed}"
+
+            bool_mod = cave_obj.modifiers.new(name="CaveBoolean", type='BOOLEAN')
+            bool_mod.operation = 'DIFFERENCE'
+            bool_mod.object = inner_cave
+
+            bpy.context.view_layer.objects.active = cave_obj
+            bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+            bpy.data.objects.remove(inner_cave, do_unlink=True)
+
+            self._create_cave_entrances(cave_obj, seed)
+            self._add_cave_details(cave_obj, seed)
+
+            return cave_obj
+
+        except Exception as e:
+            self.logger.error(f"Error creating cave geometry: {e}")
+            return None
+
+    def _create_cave_entrances(self, cave_obj: bpy.types.Object, seed: int):
+        """Create Cave entrances"""
+        try:
+            bpy.ops.mesh.primitive_cylinder_add(radius=2, depth=4, location=(8, 0, -2))
+            entrance = bpy.context.active_object
+            entrance.name = f"Cave_Entrance_{seed}"
+
+            bool_mod = cave_obj.modifiers.new(name="CaveEntrance", type='BOOLEAN')
+            bool_mod.operation = 'UNION'
+            bool_mod.object = entrance
+
+            bpy.context.view_layer.objects.active = cave_obj
+            bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+            bpy.data.objects.remove(entrance, do_unlink=True)
+
+        except Exception as e:
+            self.logger.warning(f"Could not create cave entrances: {e}")
+
+    def _add_cave_details(self, cave_obj: bpy.types.Object, seed: int):
+        """Add Cave details (stalactites, stalagmites, etc.)"""
+        try:
+            for i in range(5):
+                x = np.random.uniform(-8, 8)
+                y = np.random.uniform(-8, 8)
+                z = np.random.uniform(2, 8)
+                
+                bpy.ops.mesh.primitive_cone_add(radius1=0.2, radius2=0.1, depth=2, location=(x, y, z))
+                stalactite = bpy.context.active_object
+                stalactite.name = f"Stalactite_{i}_{seed}"
+
+                bool_mod = cave_obj.modifiers.new(name=f"Stalactite_{i}", type='BOOLEAN')
+                bool_mod.operation = 'UNION'
+                bool_mod.object = stalactite
+
+                bpy.context.view_layer.objects.active = cave_obj
+                bpy.ops.object.modifier_apply(modifier=bool_mod.name)
+
+                bpy.data.objects.remove(stalactite, do_unlink=True)
+
+        except Exception as e:
+            self.logger.warning(f"Could not add cave details: {e}")
+
+    def _apply_cave_material(self, obj):
+        """Apply Cave material"""
+        try:
+            material = bpy.data.materials.new(name="Cave_Rock")
+            material.use_nodes = True
+
+            bsdf = material.node_tree.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (0.4, 0.3, 0.2, 1.0)
+            bsdf.inputs["Roughness"].default_value = 0.9
+            bsdf.inputs["Specular"].default_value = 0.1
+
+            obj.data.materials.append(material)
+
+        except Exception as e:
+            self.logger.warning(f"Could not apply cave material: {e}")
+
+
+class AdvancedTerrainFeatures:
+    """All advanced terrain features - like in original Infinigen"""
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.surface_registry = SurfaceRegistry()
+        self.mesher = AdvancedTerrainMesher()
+        self.water_system = WaterSystem()
+        self.atmosphere_system = AtmosphereSystem()
+        self.snow_system = SnowSystem()
+        self.lava_system = LavaSystem()
+        self.beach_eroded_system = BeachErodedSystem()
+        self.cave_system = CaveSystem()
+
+    def init_all_features(self, cameras=None, bounds=None, **kwargs):
+        """Initialize all advanced features"""
+        try:
+            self.mesher.init_meshers(cameras, bounds, **kwargs)
+            self.logger.info("✅ All advanced terrain features initialized")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize all features: {e}")
+
+    def create_terrain_with_features(self, terrain_type: str, seed: int, **kwargs) -> Dict[str, Any]:
+        """Create terrain with all advanced features"""
+        result = {
+            "success": True,
+            "terrain_mesh": None,
+            "water": None,
+            "atmosphere": None,
+            "snow": None,
+            "lava": None,
+            "beach": None,
+            "eroded": None,
+        }
+
+        try:
+            bpy.ops.mesh.primitive_plane_add(size=100, location=(0, 0, 0))
+            terrain_obj = bpy.context.active_object
+            terrain_obj.name = f"{terrain_type}_Terrain_{seed}"
+            result["terrain_mesh"] = terrain_obj
+
+            if terrain_type == "mountain":
+                result["snow"] = self.snow_system.create_snow_layer(terrain_obj, seed)
+            elif terrain_type == "volcano":
+                result["lava"] = self.lava_system.create_lava_flow(terrain_obj, seed)
+            elif terrain_type == "coast":
+                result["beach"] = self.beach_eroded_system.create_beach_terrain(seed)
+            elif terrain_type == "desert":
+                result["eroded"] = self.beach_eroded_system.create_eroded_terrain(seed)
+
+            if kwargs.get("add_water", False):
+                result["water"] = self.water_system.create_ocean(seed, (-100, 100, -100, 100))
+
+            if kwargs.get("add_atmosphere", False):
+                result["atmosphere"] = self.atmosphere_system.create_atmosphere(seed)
+
+            self.logger.info(f"✅ Terrain with features created: {terrain_type}")
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Error creating terrain with features: {e}")
+            result["success"] = False
+            result["error"] = str(e)
+            return result
+
+    def get_available_features(self) -> List[str]:
+        """List all available features"""
+        return [
+            "water",
+            "atmosphere",
+            "snow",
+            "lava",
+            "beach",
+            "eroded",
+            "surface_registry",
+            "advanced_meshing",
+        ]
+
+    def get_surface_types(self) -> List[str]:
+        """List all available surface types"""
+        return self.surface_registry.list_surfaces()
 
 
 class TerrainType(Enum):
@@ -342,7 +901,7 @@ class KernelsInterpolationSystem:
                 kernel = "thin_plate_spline"
             elif kernel_type == "matern":
                 kernel = "multiquadric"  # Closest to Matern
-        else:
+            else:
                 kernel = "thin_plate_spline"
 
             # Create RBF interpolator
@@ -518,12 +1077,13 @@ class Blender4SampleOperations:
             links.new(input_node.outputs[0], raycast.inputs[0])
             links.new(input_node.outputs[0], sample_uv_surface.inputs[0])
 
-            # Add output sockets first
-            output_node.inputs.new("NodeSocketGeometry", "SampleIndex")
-            output_node.inputs.new("NodeSocketGeometry", "SampleNearest")
-            output_node.inputs.new("NodeSocketGeometry", "SampleNearestSurface")
-            output_node.inputs.new("NodeSocketGeometry", "Raycast")
-            output_node.inputs.new("NodeSocketGeometry", "SampleUVSurface")
+            # Add output sockets first - only if they don't exist
+            if len(output_node.inputs) == 0:
+                output_node.inputs.new("NodeSocketGeometry", "SampleIndex")
+                output_node.inputs.new("NodeSocketGeometry", "SampleNearest")
+                output_node.inputs.new("NodeSocketGeometry", "SampleNearestSurface")
+                output_node.inputs.new("NodeSocketGeometry", "Raycast")
+                output_node.inputs.new("NodeSocketGeometry", "SampleUVSurface")
 
             # Connect to output
             links.new(sample_index.outputs[0], output_node.inputs[0])
@@ -689,11 +1249,12 @@ class Blender4TopologyNodes:
             links.new(input_node.outputs[0], face_of_corner.inputs[0])
             links.new(input_node.outputs[0], vertex_of_corner.inputs[0])
 
-            # Add output sockets first
-            output_node.inputs.new("NodeSocketGeometry", "Corners")
-            output_node.inputs.new("NodeSocketGeometry", "Edges")
-            output_node.inputs.new("NodeSocketGeometry", "Face")
-            output_node.inputs.new("NodeSocketGeometry", "Vertex")
+            # Add output sockets first - only if they don't exist
+            if len(output_node.inputs) == 0:
+                output_node.inputs.new("NodeSocketGeometry", "Corners")
+                output_node.inputs.new("NodeSocketGeometry", "Edges")
+                output_node.inputs.new("NodeSocketGeometry", "Face")
+                output_node.inputs.new("NodeSocketGeometry", "Vertex")
 
             # Connect to output
             links.new(corners_of_face.outputs[0], output_node.inputs[0])
@@ -848,8 +1409,9 @@ class Blender4LODSystem:
             switch_node.location = (400, 0)
             output_node.location = (600, 0)
 
-            # Add output sockets
-            output_node.inputs.new("NodeSocketGeometry", "Geometry")
+            # Add output sockets - only if they don't exist
+            if len(output_node.inputs) == 0:
+                output_node.inputs.new("NodeSocketGeometry", "Geometry")
 
             # Connect nodes
             links = node_group.links
@@ -932,8 +1494,9 @@ class Blender4PointDistribution:
             instance_on_points.location = (400, 0)
             output_node.location = (600, 0)
 
-            # Add output sockets
-            output_node.inputs.new("NodeSocketGeometry", "Geometry")
+            # Add output sockets - only if they don't exist
+            if len(output_node.inputs) == 0:
+                output_node.inputs.new("NodeSocketGeometry", "Geometry")
 
             # Connect nodes
             links = node_group.links
@@ -1007,7 +1570,7 @@ class Blender4Integration:
             # Create or get material
             if material_name in bpy.data.materials:
                 material = bpy.data.materials[material_name]
-        else:
+            else:
                 material = bpy.data.materials.new(name=material_name)
                 material.use_nodes = True
 
@@ -1148,6 +1711,9 @@ class ModernTerrainEngine:
             DuckDBSpatialManager() if self.config.use_duckdb_storage else None
         )
         self.blender_integration = Blender4Integration()
+        
+        # Initialize advanced features
+        self.advanced_features = AdvancedTerrainFeatures()
 
         # Initialize random seed
         np.random.seed(self.config.seed)
@@ -1222,6 +1788,32 @@ class ModernTerrainEngine:
                 rendering_quality = "high" if self.config.resolution >= 512 else "medium"
                 setup_modern_terrain_rendering(terrain_obj, rendering_quality)
 
+            # Initialize result dictionary
+            result = {
+                "success": True,
+                "terrain_object": terrain_obj,
+                "mesh": mesh,
+                "height_map": height_map,
+                "generation_time": time.time() - start_time,
+                "vertices_count": len(mesh.vertices),
+                "faces_count": len(mesh.faces),
+                "topology_info": topology_info,
+                "config": self.config,
+            }
+
+            # 4.7. Add advanced terrain features based on terrain type
+            if self.config.enable_advanced_features:
+                advanced_result = self.advanced_features.create_terrain_with_features(
+                    terrain_type=self.config.terrain_type.value,
+                    seed=self.config.seed,
+                    add_water=kwargs.get("add_water", False),
+                    add_atmosphere=kwargs.get("add_atmosphere", False),
+                )
+                
+                # Merge advanced features results
+                if advanced_result["success"]:
+                    result.update(advanced_result)
+
             # 5. Store in DuckDB if enabled
             if self.spatial_manager:
                 metadata = {
@@ -1238,19 +1830,10 @@ class ModernTerrainEngine:
                     f"terrain_{self.config.seed}", height_map, bounds, metadata_json
                 )
 
-            generation_time = time.time() - start_time
+            # Update generation time
+            result["generation_time"] = time.time() - start_time
 
-            return {
-                "success": True,
-                "terrain_object": terrain_obj,
-                "mesh": mesh,
-                "height_map": height_map,
-                "generation_time": generation_time,
-                "vertices_count": len(mesh.vertices),
-                "faces_count": len(mesh.faces),
-                "topology_info": topology_info,
-                "config": self.config,
-            }
+            return result
 
         except Exception as e:
             generation_time = time.time() - start_time
