@@ -1133,8 +1133,6 @@ def nodegroup_handle(nw: NodeWrangler):
         input_kwargs={
             "Mesh 1": join_geometry_1,
             "Mesh 2": curve_to_mesh,
-            "Self Intersection": True,
-            "Hole Tolerant": True,
         },
     )
 

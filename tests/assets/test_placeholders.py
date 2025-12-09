@@ -36,7 +36,6 @@ def get_asset_facs():
     return sorted(list(asset_facs), key=lambda x: x.__name__)
 
 
-@pytest.mark.skip  # TODO re-enable. Too many assets fail this
 @pytest.mark.parametrize("fac", get_real_placeholder_facs())
 def test_real_placeholders(fac):
     butil.clear_scene()

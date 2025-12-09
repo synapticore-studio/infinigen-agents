@@ -86,11 +86,11 @@ class FileTee:
 
 def get_fake_job_id():
     # Lahav assures me these will never conflict
-    return np.random.randint(int(1e10), int(1e11))
+    return np.random.randint(1000000000, 2147483647)
 
 
 def job_wrapper(
-    command: list[str],
+    command: str,
     stdout_file: Path,
     stderr_file: Path,
     cuda_devices=None,
@@ -112,7 +112,7 @@ def job_wrapper(
             command,
             stdout=stdout,
             stderr=stderr,
-            shell=False,
+            shell=True,  # Use shell=True for string commands
             check=False,  # dont throw CalledProcessError
             env=env,
         )

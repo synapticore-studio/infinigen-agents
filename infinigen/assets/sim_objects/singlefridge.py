@@ -1722,8 +1722,6 @@ def nodegroup_handle(nw: NodeWrangler):
         input_kwargs={
             "Mesh 1": join_geometry_1,
             "Mesh 2": curve_to_mesh,
-            "Self Intersection": True,
-            "Hole Tolerant": True,
         },
     )
 
@@ -1846,6 +1844,26 @@ def nodegroup_multiple_objects(nw: NodeWrangler):
             ("NodeSocketVector", "ObjectNum", (0.0000, 0.0000, 0.0000)),
         ],
     )
+
+    # Custom Normals for enhanced sim object surface detail (Blender 4.5+)
+    if hasattr(Nodes, "SetMeshNormal"):
+        normal = nw.new_node(Nodes.InputNormal)
+
+        # Create custom normal calculation for sim object surface
+        sim_normal = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: normal, 1: nw.new_value(0.01, "sim_normal_strength")},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        # Apply custom normals to geometry
+        set_normal = nw.new_node(
+            Nodes.SetMeshNormal,
+            input_kwargs={
+                "Geometry": group_input.outputs["Object"],
+                "Normal": sim_normal.outputs["Vector"],
+            },
+        )
 
     geometry_to_instance = nw.new_node(
         "GeometryNodeGeometryToInstance",

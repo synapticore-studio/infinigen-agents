@@ -360,10 +360,25 @@ def update_symlink(scene_folder, scenes):
 
 
 def get_disk_usage(folder):
-    out = subprocess.check_output(
-        f"df -h {folder.resolve()}".replace(" (Princeton)", "").split()
-    ).decode()
-    return int(re.compile("[\s\S]* ([0-9]+)% [\s\S]*").fullmatch(out).group(1)) / 100
+    import platform
+    import shutil
+    
+    if platform.system() == "Windows":
+        # Windows: use shutil.disk_usage
+        try:
+            total, used, free = shutil.disk_usage(folder.resolve())
+            return used / total
+        except:
+            return 0.5  # fallback
+    else:
+        # Linux/Unix: use df command
+        try:
+            out = subprocess.check_output(
+                f"df -h {folder.resolve()}".replace(" (Princeton)", "").split()
+            ).decode()
+            return int(re.compile(r"[\s\S]* ([0-9]+)% [\s\S]*").fullmatch(out).group(1)) / 100
+        except:
+            return 0.5  # fallback
 
 
 def make_html_page(output_path, scenes, frame, camera_pair_id, **kwargs):

@@ -12,7 +12,9 @@ from infinigen.assets.sim_objects.doublefridge import DoublefridgeFactory
 from infinigen.assets.sim_objects.lamp import LampFactory
 from infinigen.assets.sim_objects.multidoublefridge import MultiDoublefridgeFactory
 from infinigen.assets.sim_objects.multifridge import MultifridgeFactory
+from infinigen.assets.sim_objects.satellite import SatelliteFactory
 from infinigen.assets.sim_objects.singlefridge import SinglefridgeFactory
+from infinigen.assets.sim_objects.space_station import SpaceStationFactory
 
 # add newly transpiled assets here
 
@@ -25,5 +27,8 @@ OBJECT_CLASS_MAP = {
     "doublefridge": DoublefridgeFactory,
     "multidoublefridge": MultiDoublefridgeFactory,
     "lamp": LampFactory,
+    # Astronomical sim objects
+    "space_station": SpaceStationFactory,
+    "satellite": SatelliteFactory,
     # add newly transpiled assets here
 }

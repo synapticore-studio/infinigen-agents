@@ -24,7 +24,8 @@ from infinigen.core.placement import density, split_in_view
 from infinigen.core.util import blender as butil
 from infinigen.core.util import pipeline
 from infinigen.core.util.camera import points_inview
-from infinigen.terrain.core import Terrain, hidden_in_viewport
+from infinigen.terrain.core import hidden_in_viewport
+from infinigen.terrain.modern_adapter import ModernTerrainAdapter as Terrain
 from infinigen.terrain.utils import Mesh
 from infinigen_examples.constraints import util as cu
 

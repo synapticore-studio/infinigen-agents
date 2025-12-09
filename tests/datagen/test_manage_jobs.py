@@ -7,6 +7,7 @@
 # - Alexander Raistrick
 
 import subprocess
+import sys
 from pathlib import Path
 
 import gin
@@ -50,26 +51,30 @@ def test_load_gin_data_schema(data_schema):
 
 
 def test_dryrun_hello_world(tmp_path):
-    cmd = (
-        f"python -m infinigen.datagen.manage_jobs --output_folder {tmp_path}/hello_world --num_scenes 1 --specific_seed 0 "
-        "--configs desert.gin simple.gin --pipeline_configs local_16GB.gin monocular.gin blender_gt.gin "
-        "--pipeline_overrides LocalScheduleHandler.use_gpu=False"
-    )
-
-    cmd += " --overrides execute_tasks.dryrun=True"
-    res = subprocess.run(cmd, shell=True, check=True)
+    cmd = [
+        sys.executable, "-m", "infinigen.datagen.manage_jobs",
+        "--output_folder", f"{tmp_path}/hello_world",
+        "--num_scenes", "1",
+        "--specific_seed", "0",
+        "--configs", "desert.gin", "simple.gin",
+        "--pipeline_configs", "local_16GB.gin", "monocular.gin", "blender_gt.gin",
+        "--pipeline_overrides", "LocalScheduleHandler.use_gpu=False",
+        "--overrides", "execute_tasks.dryrun=True"
+    ]
+    res = subprocess.run(cmd, check=True)
     assert res.returncode == 0
 
 
 def test_dryrun_hello_room(tmp_path):
-    cmd = (
-        f"python -m infinigen.datagen.manage_jobs --output_folder {tmp_path}/hello_room --num_scenes 1 --specific_seed 0 "
-        "--pipeline_configs local_256GB.gin monocular.gin blender_gt.gin indoor_background_configs.gin "
-        "--configs singleroom.gin "
-        "--pipeline_overrides get_cmd.driver_script='infinigen_examples.generate_indoors' LocalScheduleHandler.use_gpu=False "
-        "--overrides compose_indoors.restrict_single_supported_roomtype=True"
-    )
-
-    cmd += " execute_tasks.dryrun=True"
-    res = subprocess.run(cmd, shell=True, check=True)
+    cmd = [
+        sys.executable, "-m", "infinigen.datagen.manage_jobs",
+        "--output_folder", f"{tmp_path}/hello_room",
+        "--num_scenes", "1",
+        "--specific_seed", "0",
+        "--pipeline_configs", "local_256GB.gin", "monocular.gin", "blender_gt.gin", "indoor_background_configs.gin",
+        "--configs", "singleroom.gin",
+        "--pipeline_overrides", "get_cmd.driver_script='infinigen_examples.generate_indoors'", "LocalScheduleHandler.use_gpu=False",
+        "--overrides", "compose_indoors.restrict_single_supported_roomtype=True", "execute_tasks.dryrun=True"
+    ]
+    res = subprocess.run(cmd, check=True)
     assert res.returncode == 0

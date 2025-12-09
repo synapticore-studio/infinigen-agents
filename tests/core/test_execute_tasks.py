@@ -20,8 +20,8 @@ def test_compose_cube():
         camera.spawn_camera_rigs()
         bpy.ops.mesh.primitive_cube_add()
 
-    output = Path("/tmp/test_compose_cube")
-    output.mkdir(exist_ok=True)
+    output = Path("tmp/test_compose_cube")
+    output.mkdir(parents=True, exist_ok=True)
 
     execute_tasks.execute_tasks(
         compose_cube,
