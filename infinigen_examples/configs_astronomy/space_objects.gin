@@ -1,0 +1,38 @@
+# Copyright (C) 2024, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: AI Assistant
+# Astronomical Space Objects Configuration for Infinigen
+
+# Star Field Configuration
+StarFieldFactory.star_count = 1000
+StarFieldFactory.radius = 100.0
+StarFieldFactory.coarse = False
+
+# Asteroid Belt Configuration
+AsteroidBeltFactory.asteroid_count = 100
+AsteroidBeltFactory.radius = 20.0
+AsteroidBeltFactory.coarse = False
+
+# Comet Configuration
+CometFactory.tail_length = 10.0
+CometFactory.coarse = False
+
+# Meteor Configuration
+MeteorFactory.meteor_size = 0.1
+MeteorFactory.coarse = False
+
+# Space Station Configuration
+SpaceStationFactory.station_type = "modular"
+SpaceStationFactory.size = 5.0
+SpaceStationFactory.coarse = False
+
+# Satellite Configuration
+SatelliteFactory.satellite_type = "communication"
+SatelliteFactory.size = 1.0
+SatelliteFactory.coarse = False
+
+# Spacecraft Configuration
+SpacecraftFactory.spacecraft_type = "shuttle"
+SpacecraftFactory.size = 3.0
+SpacecraftFactory.coarse = False

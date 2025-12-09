@@ -1,0 +1,112 @@
+{
+    "graph": {
+        "root": {
+            "kinematic_type": -1,
+            "joint_type": -1,
+            "children": {
+                "0": "body"
+            }
+        },
+        "body": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {
+                "0": "solar_panels",
+                "1": "dish_joint"
+            }
+        },
+        "solar_panels": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {
+                "0": "panel_joint_1",
+                "1": "panel_joint_2"
+            }
+        },
+        "panel_joint_1": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "panel_1"
+            }
+        },
+        "panel_1": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "panel_joint_2": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "panel_2"
+            }
+        },
+        "panel_2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "dish_joint": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "dish"
+            }
+        },
+        "dish": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {
+                "0": "antenna_joint"
+            }
+        },
+        "antenna_joint": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "antenna_1",
+                "1": "antenna_2"
+            }
+        },
+        "antenna_1": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "antenna_2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        }
+    },
+    "metadata": {
+        "panel_joint_1": {
+            "joint label": "panel_joint_1",
+            "parent body label": "body",
+            "child body label": "panel_1"
+        },
+        "panel_joint_2": {
+            "joint label": "panel_joint_2",
+            "parent body label": "body",
+            "child body label": "panel_2"
+        },
+        "dish_joint": {
+            "joint label": "dish_joint",
+            "parent body label": "body",
+            "child body label": "dish"
+        },
+        "antenna_joint": {
+            "joint label": "antenna_joint",
+            "parent body label": "dish",
+            "child body label": "antenna_1"
+        }
+    },
+    "labels": [
+        "body",
+        "solar_panel",
+        "dish",
+        "antenna"
+    ],
+    "name": "satellite"
+}

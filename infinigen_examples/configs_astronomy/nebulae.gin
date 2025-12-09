@@ -1,0 +1,35 @@
+# Copyright (C) 2024, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: AI Assistant
+# Astronomical Nebulae Configuration for Infinigen
+
+# Emission Nebula Configuration
+EmissionNebulaFactory.nebula_size = 50.0
+EmissionNebulaFactory.density = 0.5
+EmissionNebulaFactory.coarse = False
+
+# Reflection Nebula Configuration
+ReflectionNebulaFactory.nebula_size = 30.0
+ReflectionNebulaFactory.dust_density = 0.3
+ReflectionNebulaFactory.coarse = False
+
+# Dark Nebula Configuration
+DarkNebulaFactory.nebula_size = 40.0
+DarkNebulaFactory.opacity = 0.8
+DarkNebulaFactory.coarse = False
+
+# Planetary Nebula Configuration
+PlanetaryNebulaFactory.nebula_size = 20.0
+PlanetaryNebulaFactory.shell_thickness = 0.3
+PlanetaryNebulaFactory.coarse = False
+
+# Supernova Remnant Configuration
+SupernovaRemnantFactory.remnant_size = 100.0
+SupernovaRemnantFactory.shock_strength = 0.7
+SupernovaRemnantFactory.coarse = False
+
+# Galaxy Configuration
+GalaxyFactory.galaxy_type = "spiral"
+GalaxyFactory.radius = 100.0
+GalaxyFactory.coarse = False

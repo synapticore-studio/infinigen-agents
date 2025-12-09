@@ -1,0 +1,42 @@
+# Astronomical SimObjects Configuration
+
+# Space Station Factory
+SpaceStationFactory.coarse = False
+
+# Satellite Factory
+SatelliteFactory.coarse = False
+
+# Sim Export Settings
+sim_export_settings = {
+    'export_dir': './astronomy_sim_exports',
+    'image_res': 512,
+    'formats': ['mjcf', 'urdf', 'usd'],
+}
+
+# Kinematic Constraints for Space Objects
+space_object_constraints = {
+    'space_station': {
+        'max_rotation_speed': 0.1,  # rad/s
+        'docking_tolerance': 0.05,  # meters
+        'solar_panel_rotation_range': 180,  # degrees
+    },
+    'satellite': {
+        'max_rotation_speed': 0.5,  # rad/s
+        'antenna_rotation_range': 360,  # degrees
+        'solar_panel_tracking': True,
+    }
+}
+
+# Physics Properties
+physics_properties = {
+    'space_station': {
+        'mass': 1000.0,  # kg
+        'inertia': [1000, 1000, 1000],
+        'damping': 0.1,
+    },
+    'satellite': {
+        'mass': 100.0,  # kg
+        'inertia': [50, 50, 50],
+        'damping': 0.05,
+    }
+}

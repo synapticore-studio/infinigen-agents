@@ -1,0 +1,111 @@
+{
+    "graph": {
+        "root": {
+            "kinematic_type": -1,
+            "joint_type": -1,
+            "children": {
+                "0": "core"
+            }
+        },
+        "core": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {
+                "0": "solar_panels",
+                "1": "docking_ports"
+            }
+        },
+        "solar_panels": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {
+                "0": "panel_joint_1",
+                "1": "panel_joint_2"
+            }
+        },
+        "panel_joint_1": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "panel_1"
+            }
+        },
+        "panel_1": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "panel_joint_2": {
+            "kinematic_type": 0,
+            "joint_type": 1,
+            "children": {
+                "0": "panel_2"
+            }
+        },
+        "panel_2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "docking_ports": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {
+                "0": "docking_joint_1",
+                "1": "docking_joint_2"
+            }
+        },
+        "docking_joint_1": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "docking_port_1"
+            }
+        },
+        "docking_port_1": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        },
+        "docking_joint_2": {
+            "kinematic_type": 0,
+            "joint_type": 0,
+            "children": {
+                "0": "docking_port_2"
+            }
+        },
+        "docking_port_2": {
+            "kinematic_type": 1,
+            "joint_type": -1,
+            "children": {}
+        }
+    },
+    "metadata": {
+        "panel_joint_1": {
+            "joint label": "panel_joint_1",
+            "parent body label": "core",
+            "child body label": "panel_1"
+        },
+        "panel_joint_2": {
+            "joint label": "panel_joint_2",
+            "parent body label": "core",
+            "child body label": "panel_2"
+        },
+        "docking_joint_1": {
+            "joint label": "docking_joint_1",
+            "parent body label": "core",
+            "child body label": "docking_port_1"
+        },
+        "docking_joint_2": {
+            "joint label": "docking_joint_2",
+            "parent body label": "core",
+            "child body label": "docking_port_2"
+        }
+    },
+    "labels": [
+        "core",
+        "solar_panel",
+        "docking_port"
+    ],
+    "name": "space_station"
+}

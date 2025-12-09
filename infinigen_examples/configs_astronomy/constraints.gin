@@ -1,0 +1,60 @@
+# Astronomical Constraints Configuration
+
+# Orbital Mechanics
+RealisticOrbitalMechanics.gravitational_constant = 6.674e-11
+
+# Constraint Solver
+AstronomicalConstraintSolver.max_iterations = 1000
+AstronomicalConstraintSolver.tolerance = 1e-6
+
+# Solar System Constraints
+solar_system_constraints = {
+    'central_star_mass': 1.989e30,  # Sun mass in kg
+    'habitable_zone_inner': 0.95,   # AU
+    'habitable_zone_outer': 1.37,   # AU
+    'planets': [
+        (3.301e23, 0.387),   # Mercury
+        (4.867e24, 0.723),   # Venus
+        (5.972e24, 1.0),     # Earth
+        (6.39e23, 1.524),    # Mars
+        (1.898e27, 5.203),   # Jupiter
+        (5.683e26, 9.537),   # Saturn
+        (8.681e25, 19.191),  # Uranus
+        (1.024e26, 30.069),  # Neptune
+    ]
+}
+
+# Moon System Constraints
+moon_system_constraints = {
+    'earth_moon': {
+        'mass': 7.342e22,      # kg
+        'distance': 384400e3,   # m
+        'eccentricity': 0.0549,
+    },
+    'jupiter_moons': [
+        {'mass': 8.931e22, 'distance': 421700e3, 'name': 'Io'},
+        {'mass': 4.799e22, 'distance': 671034e3, 'name': 'Europa'},
+        {'mass': 1.482e23, 'distance': 1070412e3, 'name': 'Ganymede'},
+        {'mass': 1.076e23, 'distance': 1882709e3, 'name': 'Callisto'},
+    ],
+    'saturn_moons': [
+        {'mass': 1.35e23, 'distance': 1221830e3, 'name': 'Titan'},
+        {'mass': 1.08e20, 'distance': 238020e3, 'name': 'Enceladus'},
+    ]
+}
+
+# Orbital Animation Constraints
+orbital_animation = {
+    'frame_rate': 30,
+    'time_scale': 1.0,  # 1.0 = real time, 0.1 = 10x faster
+    'camera_smoothing': 0.8,
+    'trail_length': 100,  # frames
+}
+
+# Physical Constants
+physical_constants = {
+    'gravitational_constant': 6.674e-11,
+    'speed_of_light': 299792458,
+    'planck_constant': 6.626e-34,
+    'boltzmann_constant': 1.381e-23,
+}

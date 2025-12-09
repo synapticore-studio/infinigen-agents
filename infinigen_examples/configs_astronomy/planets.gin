@@ -1,0 +1,38 @@
+# Copyright (C) 2024, Princeton University.
+# This source code is licensed under the BSD 3-Clause license found in the LICENSE file in the root directory of this source tree.
+
+# Authors: AI Assistant
+# Astronomical Planets Configuration for Infinigen
+
+# Rocky Planet Configuration
+RockyPlanetFactory.radius = 1.0
+RockyPlanetFactory.resolution = 64
+RockyPlanetFactory.coarse = False
+
+# Gas Giant Configuration  
+GasGiantFactory.radius = 2.0
+GasGiantFactory.resolution = 64
+GasGiantFactory.coarse = False
+
+# Ice Planet Configuration
+IcePlanetFactory.radius = 0.8
+IcePlanetFactory.resolution = 64
+IcePlanetFactory.coarse = False
+
+# Ringed Planet Configuration
+RingedPlanetFactory.radius = 2.0
+RingedPlanetFactory.resolution = 64
+RingedPlanetFactory.coarse = False
+RingedPlanetFactory.has_atmosphere = True
+RingedPlanetFactory.has_rings = True
+
+# Moon Factory with realistic orbital mechanics
+MoonFactory.radius = 0.2
+MoonFactory.resolution = 32
+MoonFactory.coarse = False
+MoonFactory.parent_mass = 5.972e24  # Earth mass in kg
+MoonFactory.moon_mass = 7.342e22   # Moon mass in kg
+MoonFactory.use_realistic_orbits = True
+
+# Planet Material Configuration (materials are now integrated into factories)
+# Material parameters are controlled through the factory classes
