@@ -62,9 +62,9 @@ def drive_param(parameter, scale=1, offset=0, index=None, name="default_value"):
         if index is not None:
             driver = driver[index]
         driver.driver.expression = f"frame*{scale}+{offset}"
-        
+
         # Modern view layer update
         bpy.context.view_layer.update()
-        
+
     except Exception as e:
         print(f"Warning: Could not create driver: {e}")

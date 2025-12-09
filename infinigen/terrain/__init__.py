@@ -1,17 +1,11 @@
 from .core import Terrain
-from .terrain_engine import (
+from .engine import (
+    DuckDBSpatialManager,
+    KernelsProcessor,
     ModernTerrainEngine,
+    PyTorchGeometricProcessor,
     TerrainConfig,
+    TerrainMapGenerator,
+    TerrainMeshGenerator,
     TerrainType,
-    MeshingStrategy,
-    create_terrain_engine,
-    generate_terrain,
-    AdvancedTerrainFeatures,
-    SurfaceRegistry,
-    WaterSystem,
-    AtmosphereSystem,
-    SnowSystem,
-    LavaSystem,
-    BeachErodedSystem,
-    CaveSystem,
 )

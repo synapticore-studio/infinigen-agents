@@ -118,39 +118,43 @@ class Terrain:
             self.__dict__ = Terrain.instance.__dict__.copy()
             return
 
-        with Timer("Create modern terrain"):
-            self.seed = seed
-            self.device = device
-            self.main_terrain = main_terrain
-            self.under_water = under_water
-            self.min_distance = min_distance
-            self.populated_bounds = populated_bounds
-            self.bounds = bounds
-            self.height_offset = height_offset
-            self.whole_bbox = whole_bbox
+        # Initialize attributes
+        self.seed = seed
+        self.device = device
+        self.main_terrain = main_terrain
+        self.under_water = under_water
+        self.min_distance = min_distance
+        self.populated_bounds = populated_bounds
+        self.bounds = bounds
+        self.height_offset = height_offset
+        self.whole_bbox = whole_bbox
 
-            # Moderne Terrain-Engine direkt integriert
+        # Moderne Terrain-Engine direkt integriert
+        with Timer("Create modern terrain"):
             self.terrain_engine = self._create_modern_engine()
 
-            # Kompatibilitäts-Attribute
-            self.elements = {}
-            self.elements_list = []
-            self.tag_dict = {}
+        # Kompatibilitäts-Attribute
+        self.elements = {}
+        self.elements_list = []
+        self.tag_dict = {}
 
-            logger.info(f"Modern Terrain initialized with seed: {seed}")
-            Terrain.instance = self
+        logger.info(f"Modern Terrain initialized with seed: {seed}")
+        Terrain.instance = self
 
     def _create_modern_engine(self):
         """Erstelle moderne Terrain-Engine direkt"""
         try:
             # Importiere moderne Engine-Komponenten
-            from infinigen.terrain.terrain_engine import ModernTerrainEngine, TerrainConfig
+            from infinigen.terrain.engine import ModernTerrainEngine, TerrainConfig, TerrainType
 
             config = TerrainConfig(
-                terrain_type="mountain",  # Default terrain type
+                terrain_type=TerrainType.MOUNTAIN,
                 resolution=128,  # Coarse resolution
                 seed=self.seed,
-                enable_advanced_features=True,
+                bounds=self.bounds,
+                use_pytorch_geometric=True,
+                use_kernels=True,
+                use_duckdb_storage=True,
             )
             return ModernTerrainEngine(config=config, device=self.device)
         except Exception as e:
@@ -202,7 +206,7 @@ class Terrain:
                 )
 
             # Update config for fine terrain
-            self.terrain_engine.config.terrain_type = "mountain"  # Complex terrain for Fine
+            self.terrain_engine.config.terrain_type = TerrainType.MOUNTAIN  # Complex terrain for Fine
             self.terrain_engine.config.resolution = 512  # Higher resolution
 
             # Generiere Terrain mit moderner Engine
@@ -266,8 +270,8 @@ class Terrain:
             # Das BVH kann viel mehr Vertices haben als das ursprüngliche Mesh
             # Verwende eine viel größere Größe für Sicherheit
             num_vertices = len(terrain_obj.data.vertices)
-            # Verwende eine sehr große Größe für Sicherheit (10x)
-            safe_size = max(100000, num_vertices * 10)
+            # Verwende eine sehr große Größe für Sicherheit (100x für BVH)
+            safe_size = max(1000000, num_vertices * 100)
             vertexwise_min_dist = np.ones(safe_size) * 10.0
 
             # Camera selection answers (vereinfacht)

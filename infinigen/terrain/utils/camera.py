@@ -61,12 +61,12 @@ def get_caminfo(cameras, relax=1.05):
     coords_trans_matrix = np.array(
         [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]]
     )
-    
+
     # Modern Blender 4.5.3+ scene handling
     scene = bpy.context.scene
     fs, fe = scene.frame_start, scene.frame_end
     fc = scene.frame_current
-    
+
     # Use modern frame handling
     for f in range(fs, fe + 1):
         scene.frame_set(f)
@@ -75,17 +75,17 @@ def get_caminfo(cameras, relax=1.05):
             cam_pose = np.array(c.matrix_world)
             cam_pose = np.dot(np.array(cam_pose), coords_trans_matrix)
             cam_poses.append(cam_pose)
-            
+
             # Modern camera data access
             fov_rad = c.data.angle
             fov_rad *= relax
-            
+
             # Modern render settings access
             H, W = (
                 scene.render.resolution_y,
                 scene.render.resolution_x,
             )
-            
+
             # Modern FOV calculation
             fov0 = np.arctan(H / 2 / (W / 2 / np.tan(fov_rad / 2))) * 2
             fov = np.array([fov0, fov_rad])
@@ -94,10 +94,10 @@ def get_caminfo(cameras, relax=1.05):
             Ks.append(K)
             Hs.append(H)
             Ws.append(W)
-    
+
     # Restore frame
     scene.frame_set(fc)
-    
+
     # Process results
     cam_poses = np.stack(cam_poses)
     cam_pose = pose_average(cam_poses)

@@ -10,16 +10,9 @@ import gin
 import numpy as np
 from numpy import ascontiguousarray as AC
 
-from infinigen.terrain.utils import (
-    ASDOUBLE,
-    ASINT,
-    Mesh,
-    Vars,
-    load_cdll,
-    register_func,
-    write_attributes,
-)
+from infinigen.terrain.utils import ASDOUBLE, ASINT, Mesh
 from infinigen.terrain.utils import Timer as tTimer
+from infinigen.terrain.utils import Vars, load_cdll, register_func, write_attributes
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +32,7 @@ class Timer(tTimer):
 @gin.configurable
 class UniformMesher:
     """Modern Uniform Mesher with adaptive strategies and PyTorch Geometric integration"""
-    
+
     def __init__(
         self,
         bounds,
@@ -50,14 +43,14 @@ class UniformMesher:
         device="cpu",
         verbose=False,
         adaptive_subdivision=True,  # New: Enable adaptive subdivision
-        quality_threshold=0.8,     # New: Mesh quality threshold
-        max_subdivision_depth=5,   # New: Maximum subdivision depth
-        use_pytorch_geometric=True, # New: Use PyTorch Geometric for optimization
+        quality_threshold=0.8,  # New: Mesh quality threshold
+        max_subdivision_depth=5,  # New: Maximum subdivision depth
+        use_pytorch_geometric=True,  # New: Use PyTorch Geometric for optimization
     ):
         self.enclosed = enclosed
         self.upscale = upscale
         self.bounds = bounds
-        
+
         # Modern adaptive meshing parameters
         self.adaptive_subdivision = adaptive_subdivision
         self.quality_threshold = quality_threshold
@@ -251,112 +244,120 @@ class UniformMesher:
 
         with Timer("compute attributes"):
             write_attributes(kernels, mesh)
-            
+
         # Apply modern adaptive strategies
         if self.adaptive_subdivision:
             mesh = self._apply_adaptive_subdivision(mesh, kernels)
-            
+
         if self.use_pytorch_geometric:
             mesh = self._optimize_with_pytorch_geometric(mesh)
-            
+
         return mesh
-    
+
     def _apply_adaptive_subdivision(self, mesh, kernels):
         """Apply adaptive subdivision based on mesh quality"""
         try:
             from scipy.spatial.distance import cdist
-            
+
             # Analyze mesh quality
             quality_scores = self._calculate_mesh_quality(mesh)
-            
+
             # Identify regions that need subdivision
             low_quality_faces = quality_scores < self.quality_threshold
-            
-            if np.any(low_quality_faces) and hasattr(mesh, 'faces'):
-                logger.info(f"Applying adaptive subdivision to {np.sum(low_quality_faces)} low-quality faces")
-                
+
+            if np.any(low_quality_faces) and hasattr(mesh, "faces"):
+                logger.info(
+                    f"Applying adaptive subdivision to {np.sum(low_quality_faces)} low-quality faces"
+                )
+
                 # Simple subdivision strategy - could be enhanced
                 # For now, just mark for potential future enhancement
                 mesh.vertex_attributes = mesh.vertex_attributes or {}
-                mesh.vertex_attributes['quality'] = np.ones(len(mesh.vertices), dtype=np.float32)
-                
+                mesh.vertex_attributes["quality"] = np.ones(
+                    len(mesh.vertices), dtype=np.float32
+                )
+
             return mesh
-            
+
         except Exception as e:
             logger.warning(f"Adaptive subdivision failed: {e}")
             return mesh
-    
+
     def _calculate_mesh_quality(self, mesh):
         """Calculate mesh quality scores for each face"""
         try:
-            if not hasattr(mesh, 'faces') or len(mesh.faces) == 0:
+            if not hasattr(mesh, "faces") or len(mesh.faces) == 0:
                 return np.array([1.0])
-                
+
             # Simple quality metric based on triangle aspect ratio
             vertices = mesh.vertices
             faces = mesh.faces
-            
+
             quality_scores = np.ones(len(faces))
-            
+
             for i, face in enumerate(faces):
                 if len(face) >= 3:
                     # Get triangle vertices
                     v0, v1, v2 = vertices[face[:3]]
-                    
+
                     # Calculate edge lengths
                     edge1 = np.linalg.norm(v1 - v0)
                     edge2 = np.linalg.norm(v2 - v1)
                     edge3 = np.linalg.norm(v0 - v2)
-                    
+
                     # Calculate aspect ratio (simple quality metric)
                     min_edge = min(edge1, edge2, edge3)
                     max_edge = max(edge1, edge2, edge3)
-                    
+
                     if max_edge > 0:
                         quality_scores[i] = min_edge / max_edge
-                        
+
             return quality_scores
-            
+
         except Exception as e:
             logger.warning(f"Quality calculation failed: {e}")
             return np.array([1.0])
-    
+
     def _optimize_with_pytorch_geometric(self, mesh):
         """Optimize mesh using PyTorch Geometric"""
         try:
             import torch
             from torch_geometric.data import Data
             from torch_geometric.nn import GCNConv
-            
-            if not hasattr(mesh, 'vertices') or len(mesh.vertices) == 0:
+
+            if not hasattr(mesh, "vertices") or len(mesh.vertices) == 0:
                 return mesh
-                
+
             # Create graph representation
             vertices = torch.tensor(mesh.vertices, dtype=torch.float32)
-            
+
             # Create simple edge index (could be enhanced)
-            if hasattr(mesh, 'faces') and len(mesh.faces) > 0:
+            if hasattr(mesh, "faces") and len(mesh.faces) > 0:
                 edges = []
                 for face in mesh.faces:
                     if len(face) >= 3:
                         # Add edges for triangle
-                        edges.extend([[face[0], face[1]], [face[1], face[2]], [face[2], face[0]]])
-                        
+                        edges.extend(
+                            [[face[0], face[1]], [face[1], face[2]], [face[2], face[0]]]
+                        )
+
                 if edges:
                     edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
-                    
+
                     # Simple GCN smoothing
                     conv = GCNConv(3, 3)
                     smoothed_vertices = conv(vertices, edge_index)
-                    
+
                     # Update mesh vertices with smoothed version (weighted)
                     alpha = 0.1  # Smoothing factor
-                    mesh.vertices = (1 - alpha) * mesh.vertices + alpha * smoothed_vertices.detach().numpy()
-                    
+                    mesh.vertices = (
+                        1 - alpha
+                    ) * mesh.vertices + alpha * smoothed_vertices.detach().numpy()
+
                     logger.info("Applied PyTorch Geometric optimization")
-                    
+
             return mesh
-            
+
         except Exception as e:
             logger.warning(f"PyTorch Geometric optimization failed: {e}")
             return mesh

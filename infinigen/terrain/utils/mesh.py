@@ -221,7 +221,7 @@ class Mesh:
         """Export mesh to Blender with modern 4.5.3+ features"""
         self.make_unique()
         new_object = object_from_VF(name, self.vertices, self.faces)
-        
+
         # Modern Blender 4.5.3+ attribute handling
         for attr_name in self.vertex_attributes:
             attr_name_ls = attr_name.lstrip("_")  # this is because of trimesh bug
@@ -233,7 +233,7 @@ class Mesh:
             type_key = NPTYPEDIM_ATTR[
                 (str(self.vertex_attributes[attr_name].dtype), dim)
             ]
-            
+
             # Use modern attribute creation with proper error handling
             try:
                 new_object.data.attributes.new(
@@ -245,7 +245,7 @@ class Mesh:
                 )
             except Exception as e:
                 print(f"Warning: Could not create attribute {attr_name_ls}: {e}")
-                
+
         if material is not None:
             new_object.data.materials.append(material)
 
@@ -263,10 +263,10 @@ class Mesh:
                 # Use modern shading operations
                 bpy.ops.object.shade_flat()
                 # Add modern mesh optimization
-                bpy.ops.object.mode_set(mode='EDIT')
-                bpy.ops.mesh.select_all(action='SELECT')
+                bpy.ops.object.mode_set(mode="EDIT")
+                bpy.ops.mesh.select_all(action="SELECT")
                 bpy.ops.mesh.normals_make_consistent(inside=False)
-                bpy.ops.object.mode_set(mode='OBJECT')
+                bpy.ops.object.mode_set(mode="OBJECT")
             except Exception as e:
                 print(f"Warning: Could not apply modern shading: {e}")
 

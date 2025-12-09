@@ -7,4 +7,4 @@ Modern Terrain System Tests
 
 from .test_integration import run_integration_tests
 
-__all__ = ['run_integration_tests']
+__all__ = ["run_integration_tests"]

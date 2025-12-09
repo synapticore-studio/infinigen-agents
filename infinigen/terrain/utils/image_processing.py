@@ -38,7 +38,7 @@ def read(input_heightmap_path):
     assert os.path.exists(
         input_heightmap_path
     ), f"{input_heightmap_path} does not exists"
-    
+
     # Modern OpenCV image reading with better error handling
     try:
         heightmap = (
@@ -46,17 +46,17 @@ def read(input_heightmap_path):
             .copy()
             .astype(float)
         )
-        
+
         # Validate image data
         if heightmap is None:
             raise ValueError(f"Could not read image from {input_heightmap_path}")
-            
+
         # Modern image validation
         if heightmap.size == 0:
             raise ValueError(f"Image is empty: {input_heightmap_path}")
-            
+
         return heightmap
-        
+
     except Exception as e:
         raise RuntimeError(f"Error reading heightmap {input_heightmap_path}: {e}")
 

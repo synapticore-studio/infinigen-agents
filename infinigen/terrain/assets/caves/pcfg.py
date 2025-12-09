@@ -19,7 +19,7 @@ STARTING_SYMBOL = "Q"
 
 def create_pcfg():
     config_lines = CONFIG_FILE.read_text().splitlines()
-    rule = re.compile("(.+) \(([0-9].[0-9][0-9]?)\) -> (.+)")
+    rule = re.compile(r"(.+) \(([0-9].[0-9][0-9]?)\) -> (.+)")
     PCFG = defaultdict(lambda: dict(a=[], p=[]))  # 1 levels
     for line in config_lines:
         regex = rule.fullmatch(line)
