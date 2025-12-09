@@ -579,7 +579,7 @@ def geometry_succulent_nodes(nw: NodeWrangler, **kwargs):
 class SucculentFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(SucculentFactory, self).__init__(factory_seed, coarse=coarse)
-        self.mode = np.random.choice(["thin_petal", "thick_petal"], p=[0.65, 0.35])
+        self.mode = np.random.choice(["thin_petal", "thick_petal"], p=[0.65, 0.35]).item()
 
     def get_params(self, mode):
         if mode == "thin_petal":
@@ -606,7 +606,7 @@ class SucculentFactory(AssetFactory):
                     init_base_radius - (i * diff_base_radius) / num_bases
                 )
                 petal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_petal_num.append(init_petal_num - i + randint(0, 2))
+                base_petal_num.append(init_petal_num - i + randint(0, 2 + 1))
                 base_petal_scale.append(1.0 - (i * diff_petal_scale) / num_bases)
                 base_z.append(0.0 + i * uniform(0.005, 0.008))
             params["base_radius"] = base_radius
@@ -615,8 +615,8 @@ class SucculentFactory(AssetFactory):
             params["base_petal_scale"] = base_petal_scale
             params["base_z"] = base_z
 
-            contour_bit = randint(0, 3)
-            material_bit = randint(0, 3)
+            contour_bit = randint(0, 3 + 1)
+            material_bit = randint(0, 3 + 1)
 
             if contour_bit == 0:
                 params["petal_curve_param"] = [0.08, 0.4, 0.46, 0.36, 0.17, 0.05]
@@ -624,6 +624,8 @@ class SucculentFactory(AssetFactory):
                 params["petal_curve_param"] = [0.22, 0.37, 0.50, 0.49, 0.30, 0.08]
             elif contour_bit == 2:
                 params["petal_curve_param"] = [0.21, 0.26, 0.31, 0.36, 0.29, 0.16]
+            elif contour_bit == 3:
+                params["petal_curve_param"] = [0.15, 0.35, 0.45, 0.40, 0.25, 0.10]
             else:
                 raise NotImplementedError
 
@@ -633,6 +635,8 @@ class SucculentFactory(AssetFactory):
                 params["material"] = succulent.shader_pink_transition_succulent
             elif material_bit == 2:
                 params["material"] = succulent.shader_green_succulent
+            elif material_bit == 3:
+                params["material"] = succulent.shader_green_transition_succulent
             else:
                 raise NotImplementedError
 
@@ -662,7 +666,7 @@ class SucculentFactory(AssetFactory):
                     init_base_radius - (i * diff_base_radius) / num_bases
                 )
                 petal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_petal_num.append(init_petal_num - i + randint(0, 2))
+                base_petal_num.append(init_petal_num - i + randint(0, 2 + 1))
                 base_petal_scale.append(1.0 - (i * diff_petal_scale) / num_bases)
                 base_z.append(0.0 + i * uniform(0.005, 0.006))
             params["base_radius"] = base_radius
@@ -671,13 +675,15 @@ class SucculentFactory(AssetFactory):
             params["base_petal_scale"] = base_petal_scale
             params["base_z"] = base_z
 
-            contour_bit = randint(0, 2)
-            material_bit = randint(0, 2)
+            contour_bit = randint(0, 2 + 1)
+            material_bit = randint(0, 2 + 1)
 
             if contour_bit == 0:
                 params["petal_curve_param"] = [0.10, 0.36, 0.44, 0.45, 0.30, 0.24]
             elif contour_bit == 1:
                 params["petal_curve_param"] = [0.16, 0.35, 0.48, 0.42, 0.30, 0.18]
+            elif contour_bit == 2:
+                params["petal_curve_param"] = [0.12, 0.34, 0.46, 0.44, 0.28, 0.20]
             else:
                 raise NotImplementedError
 
@@ -685,6 +691,8 @@ class SucculentFactory(AssetFactory):
                 params["material"] = succulent.shader_yellow_succulent
             elif material_bit == 1:
                 params["material"] = succulent.shader_whitish_green_succulent
+            elif material_bit == 2:
+                params["material"] = succulent.shader_yellow_succulent
             else:
                 raise NotImplementedError
 

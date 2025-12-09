@@ -181,7 +181,7 @@ def apply_skirtingboard(
 
     # TODO: randomize style / size / materials
     if seed is None:
-        seed = randint(0, 10000)
+        seed = randint(0, 10000 + 1)
     with FixedSeed(seed):
         thickness = uniform(0.02, 0.05)
         height = uniform(0.08, 0.15)

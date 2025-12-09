@@ -30,6 +30,29 @@ def cloud_geometry_func(
         group_input = nw.new_node(Nodes.GroupInput)
         position = nw.new_node(Nodes.InputPosition)
 
+        # Custom Normals for enhanced cloud surface detail (Blender 4.5+)
+        if hasattr(Nodes, "SetMeshNormal"):
+            normal = nw.new_node(Nodes.InputNormal)
+
+            # Create custom normal calculation for cloud surface
+            cloud_normal = nw.new_node(
+                Nodes.VectorMath,
+                input_kwargs={
+                    0: normal,
+                    1: nw.new_value(0.02, "cloud_normal_strength"),
+                },
+                attrs={"operation": "MULTIPLY"},
+            )
+
+            # Apply custom normals to geometry
+            set_normal = nw.new_node(
+                Nodes.SetMeshNormal,
+                input_kwargs={
+                    "Geometry": group_input,
+                    "Normal": cloud_normal.outputs["Vector"],
+                },
+            )
+
         vector_rotate = nw.new_node(
             Nodes.VectorRotate,
             input_kwargs={

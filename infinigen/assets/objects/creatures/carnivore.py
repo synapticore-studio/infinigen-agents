@@ -20,7 +20,7 @@ from infinigen.assets.objects.creatures.util.genome import Joint
 from infinigen.core import surface
 from infinigen.core.placement.factory import AssetFactory
 from infinigen.core.util import blender as butil
-from infinigen.core.util.math import clip_gaussian
+from infinigen.core.util.math import FixedSeed, clip_gaussian
 from infinigen.core.util.random import weighted_sample
 
 
@@ -245,11 +245,12 @@ class CarnivoreFactory(AssetFactory):
                 "Please disable either hair or both of animation/clothsim"
             )
 
-        body_material_fac = weighted_sample(material_assignments.carnivore)
-        self.body_material = body_material_fac()
-        self.tongue_material = materials.creature.Tongue()
-        self.teeth_material = materials.creature.Bone()
-        self.nose_material = materials.creature.Nose()
+        with FixedSeed(self.factory_seed):
+            body_material_fac = weighted_sample(material_assignments.carnivore)
+            self.body_material = body_material_fac()
+            self.tongue_material = materials.creature.Tongue()
+            self.teeth_material = materials.creature.Bone()
+            self.nose_material = materials.creature.Nose()
 
     def create_placeholder(self, **kwargs):
         return butil.spawn_cube(size=4)

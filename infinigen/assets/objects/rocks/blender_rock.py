@@ -26,7 +26,7 @@ class BlenderRockFactory(AssetFactory):
     def create_asset(self, **params):
         require_blender_addon("extra_mesh_objects")
 
-        seed = np.random.randint(0, 99999)
+        seed = np.random.randint(0, 99999 + 1)
 
         zscale = U(0.2, 0.8)
         zrand = U(0, 0.7)

@@ -94,6 +94,7 @@ class Nodes:
 
     # Geometry
     SetPosition = "GeometryNodeSetPosition"
+    SetMeshNormal = "GeometryNodeSetMeshNormal"  # Blender 4.5+ Custom Normals
     JoinGeometry = "GeometryNodeJoinGeometry"
     MergeByDistance = "GeometryNodeMergeByDistance"
     SeparateGeometry = "GeometryNodeSeparateGeometry"

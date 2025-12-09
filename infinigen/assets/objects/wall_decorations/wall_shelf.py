@@ -116,8 +116,9 @@ class WallShelfFactory(AssetFactory):
 
     def create_asset(self, **params) -> bpy.types.Object:
         obj = self.make_plate()
-        surface.assign_material(obj, self.plate_surface())
-        # self.plate_surface.apply(obj)
+        plate_material = self.plate_surface()
+        surface.assign_material(obj, plate_material)
+        
         if self.support_side != "none":
             support = self.make_support()
             supports = [support] + [
@@ -125,9 +126,22 @@ class WallShelfFactory(AssetFactory):
             ]
             for s, l in zip(supports, self.support_locs):
                 s.location[1] = self.length * l
-            surface.assign_material(supports, self.support_surface())
-            # self.support_surface.apply(supports)
+            support_material = self.support_surface()
+            surface.assign_material(supports, support_material)
             obj = join_objects([obj] + supports)
+            
+            # Ensure all material slots are properly assigned
+            if obj.data is not None and hasattr(obj.data, 'materials'):
+                # Ensure all material slots have materials assigned
+                for i, slot in enumerate(obj.material_slots):
+                    if slot.material is None:
+                        if i == 0:
+                            slot.material = plate_material
+                        elif i == 1:
+                            slot.material = support_material
+                        else:
+                            # For additional slots, use support material as fallback
+                            slot.material = support_material
         return obj
 
     def make_plate(self):

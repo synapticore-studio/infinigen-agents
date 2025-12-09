@@ -602,7 +602,6 @@ def nodegroup_carnivore_head(nw: NodeWrangler):
         Nodes.MeshBoolean,
         input_kwargs={
             "Mesh 2": [join_geometry, simple_tube_v2.outputs["Geometry"]],
-            "Self Intersection": True,
         },
         attrs={"operation": "UNION"},
     )
@@ -688,7 +687,6 @@ def nodegroup_carnivore_head(nw: NodeWrangler):
                 attach_part.outputs["Geometry"],
                 symmetric_clone.outputs["Both"],
             ],
-            "Self Intersection": True,
         },
     )
 

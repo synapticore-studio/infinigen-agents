@@ -320,7 +320,7 @@ def animate_running_front_leg(
     frame_period = int(bpy.context.scene.render.fps / freq)
 
     def number_finder(s):
-        rr = re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", s)
+        rr = re.findall(r"[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", s)
         return int(rr[0])
 
     left = 1000
@@ -363,7 +363,7 @@ def animate_running_back_leg(
     frame_period = int(bpy.context.scene.render.fps / freq)
 
     def number_finder(s):
-        rr = re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", s)
+        rr = re.findall(r"[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", s)
         return int(rr[0])
 
     left = 1000

@@ -27,7 +27,7 @@ class TreeFactory(AssetFactory):
         self,
         factory_seed,
         tree_type="oak",
-        addon_type="mtree",  # "mtree" or "treegen"
+        addon_type="simple",  # "simple" (default), "mtree" or "treegen"
         height_range=(3.0, 8.0),
         trunk_radius_range=(0.2, 0.6),
         crown_radius_range=(2.0, 5.0),
@@ -53,7 +53,9 @@ class TreeFactory(AssetFactory):
         """Ensure the required tree addon is available"""
         try:
             if self.addon_type == "mtree":
-                require_blender_addon("mtree", fail="warn")
+                # Mtree deaktiviert wegen Endlosschleife in Blender 4.5
+                logger.warning("Mtree addon disabled due to infinite loop issue, using simple tree generation")
+                self.addon_type = "simple"
             elif self.addon_type == "treegen":
                 require_blender_addon("treegen", fail="warn")
         except Exception as e:
@@ -62,22 +64,118 @@ class TreeFactory(AssetFactory):
             self.addon_type = "simple"
 
     def create_placeholder(self, i, loc, rot):
-        """Create tree placeholder following Infinigen pattern"""
-        logger.debug(f"Creating tree placeholder {i}")
+        """Create improved tree placeholder with better geometry"""
+        logger.debug(f"Creating improved tree placeholder {i}")
 
-        # Create simple cube placeholder like original Infinigen
+        # Create a more realistic tree shape using multiple objects
+        tree_group = bpy.data.collections.new(f"Tree_{i}")
+        bpy.context.scene.collection.children.link(tree_group)
+
+        # Create trunk
+        trunk = butil.spawn_cube(
+            size=1, location=(loc[0], loc[1], loc[2] + 1), name=f"Trunk_{i}"
+        )
+        trunk.scale = (0.3, 0.3, 2.0)  # Make it tall and thin
+        trunk.rotation_euler = rot
+        trunk.data.materials.append(self._create_bark_material())
+        tree_group.objects.link(trunk)
+
+        # Create crown (leaves)
+        crown = butil.spawn_cube(
+            size=3, location=(loc[0], loc[1], loc[2] + 3), name=f"Crown_{i}"
+        )
+        crown.scale = (1.5, 1.5, 1.0)  # Make it wide and flat
+        crown.rotation_euler = rot
+        crown.data.materials.append(self._create_leaves_material())
+        tree_group.objects.link(crown)  # Fix: link crown, not trunk again
+
+        # Create main tree object
         placeholder = butil.spawn_cube(
             size=4, location=loc, name=f"Tree_Placeholder_{i}"
         )
         placeholder.rotation_euler = rot
+        placeholder.data.materials.append(self._create_tree_material())
 
         # Tag for Infinigen compatibility
         placeholder["is_placeholder"] = True
         placeholder["tree_type"] = self.tree_type
         placeholder["addon_type"] = self.addon_type
         placeholder["coarse_mesh_placeholder"] = self.coarse
+        placeholder["tree_group"] = tree_group.name
 
         return placeholder
+
+    def _create_bark_material(self):
+        """Create bark material for tree trunk"""
+        material = bpy.data.materials.new(name="BarkMaterial")
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        links = material.node_tree.links
+
+        # Clear default nodes
+        nodes.clear()
+
+        # Add Principled BSDF
+        principled = nodes.new(type="ShaderNodeBsdfPrincipled")
+        principled.inputs["Base Color"].default_value = (0.4, 0.2, 0.1, 1.0)  # Brown
+        principled.inputs["Roughness"].default_value = 0.8
+        principled.inputs["Metallic"].default_value = 0.0
+
+        # Add Material Output
+        output = nodes.new(type="ShaderNodeOutputMaterial")
+
+        # Connect nodes
+        links.new(principled.outputs["BSDF"], output.inputs["Surface"])
+
+        return material
+
+    def _create_leaves_material(self):
+        """Create leaves material for tree crown"""
+        material = bpy.data.materials.new(name="LeavesMaterial")
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        links = material.node_tree.links
+
+        # Clear default nodes
+        nodes.clear()
+
+        # Add Principled BSDF
+        principled = nodes.new(type="ShaderNodeBsdfPrincipled")
+        principled.inputs["Base Color"].default_value = (0.2, 0.6, 0.2, 1.0)  # Green
+        principled.inputs["Roughness"].default_value = 0.7
+        principled.inputs["Metallic"].default_value = 0.0
+
+        # Add Material Output
+        output = nodes.new(type="ShaderNodeOutputMaterial")
+
+        # Connect nodes
+        links.new(principled.outputs["BSDF"], output.inputs["Surface"])
+
+        return material
+
+    def _create_tree_material(self):
+        """Create main tree material"""
+        material = bpy.data.materials.new(name="TreeMaterial")
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        links = material.node_tree.links
+
+        # Clear default nodes
+        nodes.clear()
+
+        # Add Principled BSDF
+        principled = nodes.new(type="ShaderNodeBsdfPrincipled")
+        principled.inputs["Base Color"].default_value = (0.3, 0.5, 0.2, 1.0)  # Green-brown
+        principled.inputs["Roughness"].default_value = 0.6
+        principled.inputs["Metallic"].default_value = 0.0
+
+        # Add Material Output
+        output = nodes.new(type="ShaderNodeOutputMaterial")
+
+        # Connect nodes
+        links.new(principled.outputs["BSDF"], output.inputs["Surface"])
+
+        return material
 
     def create_asset(self, placeholder, face_size, distance, **kwargs):
         """Create actual tree asset using modern addons"""

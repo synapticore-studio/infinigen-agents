@@ -260,7 +260,7 @@ class MushroomCapFactory(AssetFactory):
     def apply_cut(self, obj):
         if max(self.cap_config["x_anchors"]) > 0.1:
             return
-        n_cuts = np.random.randint(0, 5)
+        n_cuts = np.random.randint(0, 5 + 1)
         angles = polygon_angles(n_cuts, np.pi / 4, np.pi * 2)
         for a in angles:
             width = uniform(0.15, 0.2) * 0.4

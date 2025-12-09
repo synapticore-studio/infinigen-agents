@@ -87,7 +87,11 @@ def colorize_normals(surface_normals):
 def colorize_depth(depth, scale_vmin=1.0):
     import plotly.graph_objects as go
     import plotly.io as pio
-    pio.kaleido.scope.default_format = "png"
+    try:
+        pio.kaleido.scope.default_format = "png"
+    except AttributeError:
+        # Plotly not properly initialized, skip
+        pass
     
     valid = (depth > 1e-3) & (depth < 1e4)
     vmin = depth[valid].min() * scale_vmin

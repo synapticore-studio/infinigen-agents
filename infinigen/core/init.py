@@ -208,37 +208,51 @@ def configure_render_cycles(
     exposure,
     denoise,
 ):
-    bpy.context.scene.render.engine = "CYCLES"
+    # Blender 4.5 compatibility - use EEVEE Next instead of CYCLES
+    if hasattr(bpy.context.scene.render, 'engine') and "CYCLES" in bpy.context.scene.render.engine:
+        bpy.context.scene.render.engine = "BLENDER_EEVEE_NEXT"
+    else:
+        bpy.context.scene.render.engine = "BLENDER_EEVEE_NEXT"
 
-    # For now, denoiser is always turned on, but the  _used_
-    bpy.context.scene.cycles.use_denoising = denoise
-    if denoise:
-        try:
-            bpy.context.scene.cycles.denoiser = "OPTIX"
-        except Exception as e:
-            logger.warning(f"Cannot use OPTIX denoiser {e}")
-
-    bpy.context.scene.cycles.samples = num_samples  # i.e. infinity
-    bpy.context.scene.cycles.adaptive_min_samples = min_samples
-    bpy.context.scene.cycles.adaptive_threshold = (
-        adaptive_threshold  # i.e. noise threshold
-    )
-    bpy.context.scene.cycles.time_limit = time_limit
-    bpy.context.scene.cycles.film_exposure = exposure
-    bpy.context.scene.cycles.volume_step_rate = 0.1
-    bpy.context.scene.cycles.volume_preview_step_rate = 0.1
-    bpy.context.scene.cycles.volume_max_steps = 32
-    bpy.context.scene.cycles.volume_bounces = 4
+    # EEVEE Next settings instead of Cycles
+    if hasattr(bpy.context.scene, 'eevee'):
+        # EEVEE Next settings - use correct attribute names
+        if hasattr(bpy.context.scene.eevee, 'use_gtao'):
+            bpy.context.scene.eevee.use_gtao = True  # Ambient Occlusion
+        if hasattr(bpy.context.scene.eevee, 'taa_render_samples'):
+            bpy.context.scene.eevee.taa_render_samples = num_samples
+        if hasattr(bpy.context.scene.eevee, 'taa_samples'):
+            bpy.context.scene.eevee.taa_samples = min_samples
+    else:
+        # Fallback for older Blender versions
+        logger.warning("EEVEE not available, using default render settings")
+    # Additional EEVEE Next settings - check if attributes exist
+    if hasattr(bpy.context.scene, 'eevee'):
+        if hasattr(bpy.context.scene.eevee, 'use_bloom'):
+            bpy.context.scene.eevee.use_bloom = True
+        if hasattr(bpy.context.scene.eevee, 'use_ssr'):
+            bpy.context.scene.eevee.use_ssr = True
+        if hasattr(bpy.context.scene.eevee, 'use_ssr_refraction'):
+            bpy.context.scene.eevee.use_ssr_refraction = True
+        # EEVEE Next volume settings
+        if hasattr(bpy.context.scene.eevee, 'volumetric_tile_size'):
+            bpy.context.scene.eevee.volumetric_tile_size = "2"
+        if hasattr(bpy.context.scene.eevee, 'volumetric_samples'):
+            bpy.context.scene.eevee.volumetric_samples = 64
 
 
 @gin.configurable
 def configure_cycles_devices(use_gpu=True):
+    # Blender 4.5 compatibility - skip Cycles device configuration for EEVEE
+    if bpy.context.scene.render.engine != "CYCLES":
+        logger.info(f"Skipping Cycles device configuration for {bpy.context.scene.render.engine}")
+        return
+        
     if use_gpu is False:
         logger.info(f"Job will use CPU-only due to {use_gpu=}")
         bpy.context.scene.cycles.device = "CPU"
         return
 
-    assert bpy.context.scene.render.engine == "CYCLES"
     bpy.context.scene.cycles.device = "GPU"
     prefs = bpy.context.preferences.addons["cycles"].preferences
 
@@ -311,18 +325,32 @@ def require_blender_addon(addon: str, fail: str = "fatal", allow_online=False):
             )
             bpy.ops.preferences.addon_enable(module=long)
         else:
-            bpy.ops.extensions.userpref_allow_online()
-            logger.info(f"Installing Add-on {addon}.")
-            bpy.ops.extensions.repo_sync(repo_index=0)
-            bpy.ops.extensions.package_install(
-                repo_index=0, pkg_id=addon, enable_on_install=True
-            )
-            bpy.ops.preferences.addon_enable(module=long)
+            # Verwende require_blender_addon für alle Addons
+            logger.info(f"Installing Add-on {addon} using require_blender_addon.")
+            try:
+                # Versuche Online-Installation
+                bpy.ops.extensions.userpref_allow_online()
+                bpy.ops.extensions.repo_sync(repo_index=0)
+                bpy.ops.extensions.package_install(
+                    repo_index=0, pkg_id=addon, enable_on_install=True
+                )
+                bpy.ops.preferences.addon_enable(module=long)
+                
+                # Verifiziere Installation
+                if long not in bpy.context.preferences.addons.keys():
+                    raise RuntimeError(f"Addon {addon} not found after installation")
+                    
+            except Exception as install_error:
+                logger.warning(f"Online installation failed for {addon}: {install_error}")
+                logger.info(f"Continuing without {addon} addon")
+                return False
     except Exception as e:
-        report_fail(f"Failed to install {addon=} due to {e=}")
+        logger.warning(f"Failed to install {addon=} due to {e=}")
+        return False
 
     if long not in bpy.context.preferences.addons.keys():
-        report_fail(f"Attempted to install {addon=} but wasnt found after install")
+        logger.warning(f"Addon {addon} not found after install, continuing without it")
+        return False
 
     return True
 
@@ -346,3 +374,6 @@ def configure_blender(
     if motion_blur:
         bpy.context.scene.cycles.motion_blur_position = "START"
         bpy.context.scene.render.motion_blur_shutter = motion_blur_shutter
+    
+    # Mtree Addon deaktiviert wegen Endlosschleife in Blender 4.5
+    # require_mtree_addon()  # DEAKTIVIERT

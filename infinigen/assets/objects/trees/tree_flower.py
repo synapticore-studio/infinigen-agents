@@ -681,6 +681,26 @@ def geo_flower(nw, petal_material, center_material):
         ],
     )
 
+    # Custom Normals for enhanced flower surface detail (Blender 4.5+)
+    if hasattr(Nodes, "SetMeshNormal"):
+        normal = nw.new_node(Nodes.InputNormal)
+
+        # Create custom normal calculation for flower surface
+        flower_normal = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: normal, 1: nw.new_value(0.02, "flower_normal_strength")},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        # Apply custom normals to geometry
+        set_normal = nw.new_node(
+            Nodes.SetMeshNormal,
+            input_kwargs={
+                "Geometry": group_input.outputs["Geometry"],
+                "Normal": flower_normal.outputs["Vector"],
+            },
+        )
+
     uv_sphere = nw.new_node(
         Nodes.MeshUVSphere,
         input_kwargs={

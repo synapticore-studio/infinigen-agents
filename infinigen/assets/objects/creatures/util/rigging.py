@@ -79,7 +79,7 @@ def create_part_bones(part_node: tree.Tree, editbones, parent):
             head = mutil.lerp_sample(skeleton, 0 * (len(skeleton) - 1)).reshape(-1)
             tail = mutil.lerp_sample(skeleton, 1 * (len(skeleton) - 1)).reshape(-1)
 
-            extra_id = re.fullmatch(".*\.extra\((.*),.*", extra.name).group(1)
+            extra_id = re.fullmatch(r".*\.extra\((.*),.*", extra.name).group(1)
             bones[extra_id] = bone(editbones, head, tail, parent)
 
     return bones

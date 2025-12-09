@@ -48,6 +48,18 @@ class Semantics(EnumTag):
     Utility = "utility"
     StaircaseRoom = "staircase-room"
     Warehouse = "warehouse"
+
+    # Astronomical object types
+    Planet = "planet"
+    Moon = "moon"
+    Star = "star"
+    Nebula = "nebula"
+    Galaxy = "galaxy"
+    Asteroid = "asteroid"
+    Comet = "comet"
+    SpaceStation = "space-station"
+    Satellite = "satellite"
+    Spacecraft = "spacecraft"
     Office = "office"
     MeetingRoom = "meeting-room"
     OpenOffice = "open-office"

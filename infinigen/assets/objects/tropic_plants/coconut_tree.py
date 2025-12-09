@@ -1614,7 +1614,7 @@ def shader_trunk(nw: NodeWrangler):
 
     d_hsv = (
         uniform(0.02, 0.05),
-        uniform(0.01, 0.05) if randint(0, 2) == 1 else uniform(0.5, 0.8),
+                        uniform(0.01, 0.05) if randint(0, 2 + 1) == 1 else uniform(0.5, 0.8),
         uniform(0.03, 0.09),
     )
     b_hsv = d_hsv[:-1] + (uniform(0.1, 0.3),)

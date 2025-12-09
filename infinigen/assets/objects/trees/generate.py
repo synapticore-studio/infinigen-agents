@@ -263,29 +263,36 @@ def random_tree_child_factory(seed, leaf_params, leaf_type, season, **kwargs):
     elif leaf_type == "apple":
         return apple.FruitFactoryApple(seed, scale=fruit_scale, **kwargs), None
     elif leaf_type == "blackberry":
-        return blackberry.FruitFactoryBlackberry(
-            seed, scale=fruit_scale, **kwargs
-        ), None
+        return (
+            blackberry.FruitFactoryBlackberry(seed, scale=fruit_scale, **kwargs),
+            None,
+        )
     elif leaf_type == "coconutgreen":
-        return coconutgreen.FruitFactoryCoconutgreen(
-            seed, scale=fruit_scale, **kwargs
-        ), None
+        return (
+            coconutgreen.FruitFactoryCoconutgreen(seed, scale=fruit_scale, **kwargs),
+            None,
+        )
     elif leaf_type == "durian":
         return durian.FruitFactoryDurian(seed, scale=fruit_scale, **kwargs), None
     elif leaf_type == "starfruit":
         return starfruit.FruitFactoryStarfruit(seed, scale=fruit_scale, **kwargs), None
     elif leaf_type == "strawberry":
-        return strawberry.FruitFactoryStrawberry(
-            seed, scale=fruit_scale, **kwargs
-        ), None
+        return (
+            strawberry.FruitFactoryStrawberry(seed, scale=fruit_scale, **kwargs),
+            None,
+        )
     elif leaf_type == "compositional_fruit":
-        return compositional_fruit.FruitFactoryCompositional(
-            seed, scale=fruit_scale, **kwargs
-        ), None
+        return (
+            compositional_fruit.FruitFactoryCompositional(
+                seed, scale=fruit_scale, **kwargs
+            ),
+            None,
+        )
     elif leaf_type == "flower":
-        return tree_flower.TreeFlowerFactory(
-            seed, rad=uniform(0.15, 0.25), **kwargs
-        ), None
+        return (
+            tree_flower.TreeFlowerFactory(seed, rad=uniform(0.15, 0.25), **kwargs),
+            None,
+        )
     elif leaf_type == "cloud":
         return CloudFactory(seed), None
     else:
@@ -402,7 +409,11 @@ class TreeFactory(GenericTreeFactory):
             ["leaf_v2", "leaf_broadleaf", "leaf_ginko", "leaf_maple"],
             p=[0.0, 0.70, 0.15, 0.15],
         )
+        if hasattr(leaf_type, "item"):
+            leaf_type = leaf_type.item()
         flower_type = np.random.choice(["flower", "berry", None], p=[1.0, 0.0, 0.0])
+        if hasattr(flower_type, "item"):
+            flower_type = flower_type.item()
         if season == "spring":
             return [flower_type]
         else:
@@ -426,14 +437,16 @@ class TreeFactory(GenericTreeFactory):
                 "compositional_fruit",
             ],
             p=[0.2, 0.0, 0.2, 0.2, 0.2, 0.0, 0.2],
-        )
+        ).item()
 
         return fruit_type
 
     def __init__(self, seed, season=None, coarse=False, fruit_chance=1.0, **kwargs):
         with FixedSeed(seed):
             if season is None:
-                season = np.random.choice(["summer", "winter", "autumn", "spring"])
+                season = np.random.choice(
+                    ["summer", "winter", "autumn", "spring"]
+                ).item()
 
         with FixedSeed(seed):
             (tree_params, twig_params, leaf_params), leaf_type = random_species(season)
@@ -527,7 +540,7 @@ class BushFactory(GenericTreeFactory):
         with FixedSeed(seed):
             leaf_type = np.random.choice(
                 ["leaf_v2", "flower", "berry"], p=[0.5, 0.5, 0]
-            )
+            ).item()
 
             colname = f"assets:{self}.twigs"
             use_cached = colname in bpy.data.collections

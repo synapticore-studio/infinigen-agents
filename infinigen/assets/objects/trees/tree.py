@@ -446,6 +446,26 @@ def tree_skeleton(
 
 def skin_tree(nw, params, source_obj=None):
     base_geo = nw.new_node(Nodes.GroupInput).outputs["Geometry"]
+
+    # Custom Normals for enhanced tree surface detail (Blender 4.5+)
+    # Deaktiviert wegen Geometry Nodes Kompatibilitätsproblemen
+    # if hasattr(Nodes, "SetMeshNormal"):
+    #     normal = nw.new_node(Nodes.InputNormal)
+    #     # Create custom normal calculation for tree surface
+    #     tree_normal = nw.new_node(
+    #         Nodes.VectorMath,
+    #         input_kwargs={0: normal, 1: nw.new_value(0.04, "tree_normal_strength")},
+    #         attrs={"operation": "MULTIPLY"},
+    #     )
+    #     # Apply custom normals to geometry
+    #     set_normal = nw.new_node(
+    #         Nodes.SetMeshNormal,
+    #         input_kwargs={
+    #             "Geometry": base_geo,
+    #             "Normal": tree_normal.outputs["Vector"],
+    #         },
+    #     )
+
     skin = nw.new_node(
         gn.set_tree_radius().name,
         input_kwargs={

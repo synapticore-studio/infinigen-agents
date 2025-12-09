@@ -71,9 +71,9 @@ class BoulderFactory(AssetFactory):
         obj.location[-1] += obj.dimensions[-1] * 0.2
         butil.apply_transform(obj, loc=True)
         if self.is_slab:
-            obj.scale = *log_uniform(0.5, 2.0, 2), log_uniform(0.1, 0.15)
+            obj.scale = (*log_uniform(0.5, 2.0, 2), log_uniform(0.1, 0.15))
         else:
-            obj.scale = *log_uniform(0.4, 1.2, 2), log_uniform(0.4, 0.8)
+            obj.scale = (*log_uniform(0.4, 1.2, 2), log_uniform(0.4, 0.8))
 
         obj.scale *= boulder_scale
         butil.apply_transform(obj)

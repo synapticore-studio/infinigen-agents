@@ -144,3 +144,10 @@ class SurfaceTypes:
     BlenderDisplacement = "BlenderDisplacement"
     Displacement = "Displacement"
     SDFPerturb = "SDFPerturb"
+    # Astronomical surface types
+    AstronomicalPlanet = "AstronomicalPlanet"
+    AstronomicalMoon = "AstronomicalMoon"
+    AstronomicalStar = "AstronomicalStar"
+    AstronomicalNebula = "AstronomicalNebula"
+    AstronomicalAsteroid = "AstronomicalAsteroid"
+    AstronomicalSpaceStation = "AstronomicalSpaceStation"

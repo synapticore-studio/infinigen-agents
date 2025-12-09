@@ -59,10 +59,13 @@ def to_nodegroup(name=None, singleton=False, type="GeometryNodeTree"):
 
 def assign_curve(c, points, handles=None):
     for i, p in enumerate(points):
+        # Convert numpy array to tuple for Blender compatibility
+        p_tuple = tuple(p) if hasattr(p, 'tolist') else p
+        
         if i < 2:
-            c.points[i].location = p
+            c.points[i].location = p_tuple
         else:
-            c.points.new(*p)
+            c.points.new(*p_tuple)
 
         if handles is not None:
             c.points[i].handle_type = handles[i]

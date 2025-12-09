@@ -209,9 +209,13 @@ def represent_default_value(val, simple=True):
             )
             code = "None"
         case _:
-            raise ValueError(
-                f"represent_default_value was unable to handle {val=} with type {type(val)}, please contact the developer"
-            )
+            # Handle bpy_func and other unsupported types gracefully
+            if hasattr(val, '__name__'):
+                logger.warning(f"Encountered unsupported function type {type(val)} with name {val.__name__}, skipping")
+                code = "None"
+            else:
+                logger.warning(f"Encountered unsupported value type {type(val)}, skipping")
+                code = "None"
 
     assert isinstance(code, str)
 

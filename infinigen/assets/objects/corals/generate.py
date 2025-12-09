@@ -147,20 +147,20 @@ class CoralFactory(AssetFactory):
 
         color = build_color_ramp(
             nw,
-            nw.musgrave(uniform(10, 20)),
+            nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": uniform(10, 20)}),
             [0.0, 0.3, 0.7, 1.0],
             [dark_color, dark_color, bright_color, bright_color],
         )
         color = nw.new_node(
-            Nodes.MixRGB,
-            [
-                nw.build_float_curve(
-                    nw.musgrave(uniform(10, 20)),
+            Nodes.Mix,
+            input_kwargs={
+                "Factor": nw.build_float_curve(
+                    nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": uniform(10, 20)}),
                     [(0, 1), (uniform(0.3, 0.4), 0), (1, 0)],
                 ),
-                color,
-                light_color,
-            ],
+                "A": color,
+                "B": light_color,
+            },
         )
 
         noise_texture = nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 50})

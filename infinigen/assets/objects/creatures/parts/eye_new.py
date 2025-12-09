@@ -2975,7 +2975,6 @@ def nodegroup_carnivore__face_structure(nw: NodeWrangler):
         Nodes.MeshBoolean,
         input_kwargs={
             "Mesh 2": [join_geometry, simple_tube_v2.outputs["Geometry"]],
-            "Self Intersection": True,
         },
         attrs={"operation": "UNION"},
     )
@@ -3083,7 +3082,6 @@ def nodegroup_carnivore__face_structure(nw: NodeWrangler):
         input_kwargs={
             "Mesh 1": union.outputs["Mesh"],
             "Mesh 2": attach_part.outputs["Geometry"],
-            "Self Intersection": True,
         },
     )
 
@@ -3796,7 +3794,6 @@ def nodegroup_cat_nose(nw: NodeWrangler):
         input_kwargs={
             "Mesh 1": transform,
             "Mesh 2": symmetric_clone.outputs["Both"],
-            "Self Intersection": True,
         },
     )
 
@@ -3971,7 +3968,6 @@ def nodegroup_carnivore_head(nw: NodeWrangler):
         input_kwargs={
             "Mesh 1": carnivore_face_structure.outputs["Geometry"],
             "Mesh 2": tigereye.outputs["ParentCutter"],
-            "Self Intersection": True,
         },
     )
 

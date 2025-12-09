@@ -66,7 +66,7 @@ def geometry_node_group_empty_new():
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
     traceback_str = " ".join(traceback.format_stack())
-    traceback_files = re.findall('/([^/]*\.py)", line ([0-9]+)', traceback_str)
+    traceback_files = re.findall(r'/([^/]*\.py)", line ([0-9]+)', traceback_str)
     traceback_files = [
         f"{f}:{l}"
         for f, l in traceback_files

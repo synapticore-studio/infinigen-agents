@@ -34,7 +34,7 @@ class LidFactory(AssetFactory):
                 self.handle_height = self.x_length * uniform(0.2, 0.25)
             self.handle_radius = self.x_length * uniform(0.15, 0.25)
             self.handle_width = self.x_length * uniform(0.25, 0.3)
-            self.handle_subsurf_level = np.random.randint(0, 3)
+            self.handle_subsurf_level = np.random.randint(0, 3 + 1)
 
             if self.is_glass:
                 surface_gen_class = weighted_sample(

@@ -142,7 +142,7 @@ def get_placeholder_points(obj: bpy.types.Object) -> np.ndarray:
 
 
 def parse_asset_name(name):
-    match = re.fullmatch("(.*)\((\d+)\)\..*_(.*)\((\d+)\)", name)
+    match = re.fullmatch(r"(.*)\((\d+)\)\..*_(.*)\((\d+)\)", name)
     if not match:
         return None, None, None, None
     return list(match.groups())
@@ -285,7 +285,7 @@ def populate_all(
 
     results = []
     for col in bpy.data.collections:
-        if not (match := re.fullmatch("placeholders:((.*)\((\d*)\))", col.name)):
+        if not (match := re.fullmatch(r"placeholders:((.*)\((\d*)\))", col.name)):
             continue
         full_repr, classname, fac_seed = match.groups()
 

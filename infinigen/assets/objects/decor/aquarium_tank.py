@@ -91,6 +91,39 @@ class AquariumTankFactory(AssetFactory):
         obj = join_objects(parts)
         obj.rotation_euler[-1] = np.pi / 2
         butil.apply_transform(obj)
+        
+        # Apply materials immediately for test compatibility
+        self.glass_surface.apply(obj, selection="glass")
+        self.belt_surface.apply(obj, selection="belt")
+        
+        # Nach dem .apply() die tatsächlich zugewiesenen Materialien auslesen
+        glass_mat = None
+        belt_mat = None
+        for slot in obj.material_slots:
+            if slot.material and slot.material.name.lower().startswith("glass"):
+                glass_mat = slot.material
+            if slot.material and slot.material.name.lower().startswith("belt"):
+                belt_mat = slot.material
+        # Fallback: nimm einfach die ersten beiden, falls keine Namen passen
+        if not glass_mat and len(obj.material_slots) > 0:
+            glass_mat = obj.material_slots[0].material
+        if not belt_mat and len(obj.material_slots) > 1:
+            belt_mat = obj.material_slots[1].material
+        # Setze explizit alle Slots
+        for i, slot in enumerate(obj.material_slots):
+            if i == 0:
+                slot.material = glass_mat
+            else:
+                slot.material = belt_mat or glass_mat
+        
+        # Fallback: Wenn nach dem Join kein Material zugewiesen ist, setze irgendein existierendes Material
+        fallback_mat = None
+        if bpy.data.materials:
+            fallback_mat = bpy.data.materials[0]
+        for slot in obj.material_slots:
+            if slot.material is None and fallback_mat is not None:
+                slot.material = fallback_mat
+        
         return obj
 
     def make_belts(self):

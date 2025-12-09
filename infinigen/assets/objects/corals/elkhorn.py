@@ -60,7 +60,7 @@ class ElkhornBaseCoralFactory(BaseCoralFactory):
         distance = nw.vector_math(
             "DISTANCE", *nw.new_node(Nodes.InputEdgeVertices).outputs[2:]
         )
-        weight = nw.scale(distance, nw.musgrave(10))
+        weight = nw.scale(distance, nw.new_node(Nodes.NoiseTexture, input_kwargs={"Scale": 10}))
 
         curve = nw.new_node(
             Nodes.EdgePathToCurve,

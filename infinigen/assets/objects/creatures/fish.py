@@ -294,14 +294,27 @@ class FishFactory(AssetFactory):
         if obj.name.find("Nurb") >= 0:
             FishGeomod().apply(obj, kwargs={"rand": True})
 
-        surface.assign_material(obj, self.body_material())
+        # Ensure material is assigned to the object
+        material = self.body_material()
+        if material is not None:
+            surface.assign_material(obj, material)
+            
+            # Ensure material slot exists and is assigned
+            if obj.data is not None and hasattr(obj.data, 'materials'):
+                if len(obj.material_slots) == 0:
+                    obj.data.materials.append(material)
+                elif obj.material_slots[0].material is None:
+                    obj.material_slots[0].material = material
 
-        mat = joining.get_parts(obj)[0].active_material
-        gold = mat is not None and "gold" in mat.name.lower()
-        self.fin_material.apply(
-            joining.get_parts(obj, False, "Fin"), shader_kwargs={"goldfish": gold}
-        )
-        self.eye_material.apply(joining.get_parts(obj, False, "Eyeball"))
+        # Apply fin and eye materials
+        parts = joining.get_parts(obj)
+        if parts:
+            mat = parts[0].active_material
+            gold = mat is not None and "gold" in mat.name.lower()
+            self.fin_material.apply(
+                joining.get_parts(obj, False, "Fin"), shader_kwargs={"goldfish": gold}
+            )
+            self.eye_material.apply(joining.get_parts(obj, False, "Eyeball"))
 
     def create_asset(self, i, **kwargs):
         instance_genome = genome.interp_genome(
@@ -315,9 +328,12 @@ class FishFactory(AssetFactory):
 
         # Force material consistency across a whole species of fish
         # TODO: Replace once Generator class is stnadardized
-        def seeded_fish_postprocess(*args, **kwargs):
+        def seeded_fish_postprocess(root_obj, *args, **kwargs):
             with FixedSeed(self.factory_seed):
-                self.apply_materials(*args, **kwargs)
+                # Apply materials to all child objects
+                for child in root_obj.children:
+                    if child.type == "MESH":
+                        self.apply_materials(child)
 
         joined, extras, arma, ik_targets = joining.join_and_rig_parts(
             root,

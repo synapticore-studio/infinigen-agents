@@ -148,7 +148,7 @@ def get_all_non_instances():
 
 
 def parse_group_from_name(name: str):
-    for reg in ["(.*)\.spawn_asset\(.*", "scatter:(.*)", "([A-Za-z_]+)"]:
+    for reg in [r"(.*)\.spawn_asset\(.*", "scatter:(.*)", "([A-Za-z_]+)"]:
         match = re.fullmatch(reg, name)
         if match:
             return match.group(1)
@@ -156,7 +156,7 @@ def parse_group_from_name(name: str):
 
 def parse_semantic_from_name(name: str):
     group_name = parse_group_from_name(name) or name
-    for reg in ["([A-Za-z_]+)[\.\(].*", "([A-Za-z_]+)"]:
+    for reg in [r"([A-Za-z_]+)[\.\(].*", "([A-Za-z_]+)"]:
         match = re.fullmatch(reg, group_name)
         if match:
             return match.group(1).replace("Factory", "").replace("_fine", "").title()

@@ -96,6 +96,27 @@ def general_fruit_geometry_nodes(
 ):
     nodeinfo = {}
 
+    # Custom Normals for enhanced fruit surface detail (Blender 4.5+)
+    if hasattr(Nodes, "SetMeshNormal"):
+        group_input = nw.new_node(Nodes.GroupInput)
+        normal = nw.new_node(Nodes.InputNormal)
+
+        # Create custom normal calculation for fruit surface
+        fruit_normal = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: normal, 1: nw.new_value(0.03, "fruit_normal_strength")},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        # Apply custom normals to geometry
+        set_normal = nw.new_node(
+            Nodes.SetMeshNormal,
+            input_kwargs={
+                "Geometry": group_input,
+                "Normal": fruit_normal.outputs["Vector"],
+            },
+        )
+
     parse_args(nodeinfo, cross_section_params["cross_section_input_args"])
     crosssection = nw.new_node(
         crosssectionlib[cross_section_params["cross_section_name"]](

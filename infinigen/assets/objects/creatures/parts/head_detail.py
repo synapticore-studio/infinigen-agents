@@ -220,7 +220,6 @@ def nodegroup_cat_nose(nw: NodeWrangler):
         input_kwargs={
             "Mesh 1": transform,
             "Mesh 2": symmetric_clone.outputs["Both"],
-            "Self Intersection": True,
         },
     )
 

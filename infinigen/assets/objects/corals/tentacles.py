@@ -141,7 +141,7 @@ def shader_tentacles(nw: NodeWrangler, base_hue=0.3):
         },
     )
     fresnel_color = hsv2rgba(uniform(0, 1), 0.6, 0.6)
-    fresnel_bdsf = nw.new_node(Nodes.PrincipledBSDF, [fresnel_color])
+    fresnel_bdsf = nw.new_node(Nodes.PrincipledBSDF, input_kwargs={"Base Color": fresnel_color})
     mixed_shader = nw.new_node(
         Nodes.MixShader, [nw.new_node(Nodes.Fresnel), principled_bsdf, fresnel_bdsf]
     )
