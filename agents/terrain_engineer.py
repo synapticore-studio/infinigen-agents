@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 
 from deps.core_deps import SeedManagerDep, ValidationManagerDep
-from deps.model_deps import ModelProviderDep
+from config.model_factory import get_model
 from tools.file_tools import FileManagerDep, LoggerDep
 
 logger = logging.getLogger(__name__)
@@ -24,15 +24,15 @@ class TerrainEngineerAgent(BaseModel):
         super().__init__(**data)
 
         # Agent configuration mit lokalem Modell
-        if self.model_provider is None:
-            self.model_provider = ModelProviderDep()
+        
+            
 
         # Fallback auf einfache Text-Generierung wenn kein Modell verfügbar
-        if self.model_provider.agent is None:
+        if self.agent is None:
             self.agent = None  # Kein AI-Agent, nur Tools
         else:
             # Verwende lokales Modell direkt
-            self.agent = self.model_provider.agent
+            self.agent = self.agent
 
     def generate_terrain(
         self,

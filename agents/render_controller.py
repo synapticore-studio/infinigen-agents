@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel
 from pydantic_ai import Agent
+from config.model_factory import get_model
 
 from deps.blender_deps import BlenderConnectionDep
 from deps.config_deps import InfinigenConfigDep
@@ -23,7 +24,7 @@ class RenderControllerAgent(BaseModel):
 
         # Agent configuration
         self.agent = Agent(
-            "gpt-4o-mini",
+            get_model(),
             result_type=Dict[str, Any],
             system_prompt="""You are a specialized render controller agent for Infinigen.
             

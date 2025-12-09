@@ -8,7 +8,7 @@ from pydantic_ai import Agent
 
 from deps.blender_deps import BlenderConnectionDep
 from deps.core_deps import SceneInfoManagerDep, SeedManagerDep, ValidationManagerDep
-from deps.model_deps import ModelProviderDep
+from config.model_factory import get_model
 from tools.blender_tools import BlenderOpsDep
 from tools.file_tools import FileManagerDep, LoggerDep
 
@@ -22,9 +22,9 @@ class SceneComposerAgent(BaseModel):
         super().__init__(**data)
 
         # Agent configuration mit lokalem Modell
-        self.model_provider = ModelProviderDep()
+        
         self.agent = Agent(
-            self.model_provider,
+            get_model(),
             result_type=Dict[str, Any],
             system_prompt="""You are a specialized scene composition agent for Infinigen.
             

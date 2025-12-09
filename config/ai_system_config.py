@@ -43,11 +43,20 @@ class SystemConfig(BaseModel):
     log_level: str = "INFO"
     log_file: Optional[Path] = None
 
-    # AI settings - Lokale distilierte Modelle
-    ai_model: str = "local"  # "local" für lokale Modelle, "openai" für OpenAI
-    local_model_path: str = "./models/infinigen-distilled"
-    model_type: str = "ollama"  # "ollama", "transformers", "llama_cpp"
-    ollama_model: str = "infinigen:latest"  # Ollama Modell-Name
+    # AI Backend settings
+    ai_model: str = "huggingface"  # "huggingface", "ollama", "openai"
+
+    # HuggingFace Inference API
+    hf_model_id: str = "openai/gpt-oss-20b"  # Default for HF Inference Providers
+    hf_provider: Optional[str] = None  # auto or: cerebras, together, nebius, groq, novita
+
+    # Ollama (local)
+    ollama_model: str = "qwen3:4b"
+
+    # OpenAI
+    openai_model: str = "gpt-4o-mini"
+
+    # Common AI settings
     max_tokens: int = 4000
     temperature: float = 0.7
 
@@ -187,7 +196,7 @@ def save_config(config_path: Path) -> None:
     import json
 
     with open(config_path, "w") as f:
-        json.dump(config.dict(), f, indent=2, default=str)
+        json.dump(config.model_dump(), f, indent=2, default=str)
 
 
 def load_config(config_path: Path) -> None:
@@ -196,7 +205,5 @@ def load_config(config_path: Path) -> None:
 
     with open(config_path, "r") as f:
         config_data = json.load(f)
-    global config
-    config = SystemConfig(**config_data)
     global config
     config = SystemConfig(**config_data)

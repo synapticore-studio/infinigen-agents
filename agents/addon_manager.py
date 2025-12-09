@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 from pydantic_ai import Agent
 
+from config.model_factory import get_model
 from deps.blender_deps import BlenderConnectionDep
 from tools.blender_tools import BlenderOpsDep
 
@@ -17,9 +18,9 @@ class AddonManagerAgent(BaseModel):
     def __init__(self, **data):
         super().__init__(**data)
 
-        # Create Pydantic-AI agent
+        # Create Pydantic-AI agent with configured model
         self.agent = Agent(
-            "openai:gpt-4o-mini",
+            get_model(),
             result_type=Dict,
             system_prompt="""You are an expert Blender addon manager. Your responsibilities include:
 

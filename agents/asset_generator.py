@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 from pydantic_ai import Agent
+from config.model_factory import get_model
 
 from deps.blender_deps import BlenderConnectionDep
 from deps.core_deps import MathUtilsDep, SeedManagerDep
@@ -21,7 +22,7 @@ class AssetGeneratorAgent(BaseModel):
 
         # Agent configuration
         self.agent = Agent(
-            "gpt-4o-mini",
+            get_model(),
             result_type=Dict[str, Any],
             system_prompt="""You are a specialized asset generation agent for Infinigen.
             
