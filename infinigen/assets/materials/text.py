@@ -148,7 +148,11 @@ class Text:
     def build_image(self, bbox):
         import plotly.graph_objects as go
         import plotly.io as pio
-        pio.kaleido.scope.default_format = "png"
+        try:
+            pio.defaults.default_format = "png"
+        except AttributeError:
+            # Plotly not properly initialized, skip
+            pass
         
         # Initialize fonts
         _init_fonts()
@@ -183,9 +187,13 @@ class Text:
         import numpy as np
         from PIL import Image
         
-        size = self.size * self.dpi
-        image = bpy.data.images.new("text_texture", width=size, height=size, alpha=True)
-        data = np.asarray(Image.open(io.BytesIO(img_bytes)), dtype=np.float32)[::-1, :] / 255.0
+        # Load image and get actual dimensions
+        pil_image = Image.open(io.BytesIO(img_bytes))
+        width, height = pil_image.size
+        
+        # Create Blender image with correct dimensions
+        image = bpy.data.images.new("text_texture", width=width, height=height, alpha=True)
+        data = np.asarray(pil_image, dtype=np.float32)[::-1, :] / 255.0
         image.pixels.foreach_set(data.ravel())
         image.pack()
         

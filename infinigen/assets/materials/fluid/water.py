@@ -46,6 +46,26 @@ def geo_water(
     group_input = nw.new_node(Nodes.GroupInput)
     position0 = nw.new_node("GeometryNodeInputPosition")
 
+    # Custom Normals for enhanced water surface detail (Blender 4.5+)
+    if hasattr(Nodes, "SetMeshNormal"):
+        normal = nw.new_node(Nodes.InputNormal)
+
+        # Create custom normal calculation for water surface
+        water_normal = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: normal, 1: nw.new_value(0.01, "water_normal_strength")},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        # Apply custom normals to geometry
+        set_normal = nw.new_node(
+            Nodes.SetMeshNormal,
+            input_kwargs={
+                "Geometry": group_input.outputs["Geometry"],
+                "Normal": water_normal.outputs["Vector"],
+            },
+        )
+
     if asset_paths == []:
         with_ripples = rg(with_ripples)
         water_scale_node = nw.new_node(Nodes.Value, label="water_scale")
@@ -84,6 +104,7 @@ def geo_water(
         animated_position = nw.add(Vector([0, 0, 0]), position0, position_shift)
         if waves_animation_speed is not None:
             from infinigen.terrain.utils import drive_param
+
             drive_param(
                 animated_position.inputs[0],
                 rg(waves_animation_speed),
@@ -122,6 +143,7 @@ def geo_water(
             )
             if animate_ripples:
                 from infinigen.terrain.utils import drive_param
+
                 drive_param(
                     instance_offset.inputs["Phase Offset"],
                     -uniform(0.2, 1),
@@ -157,8 +179,10 @@ def geo_water(
         )
         sampled_disp = nw.new_node(Nodes.ImageTexture, [seq, position])
         from infinigen.terrain.utils import drive_param
+
         drive_param(sampled_disp.inputs["Frame"], 1, 0)
         from infinigen.terrain.assets.ocean import spatial_size
+
         offset = nw.multiply(
             sampled_disp,
             Vector(
@@ -177,6 +201,7 @@ def geo_water(
         seq.source = "SEQUENCE"
         foam = nw.new_node(Nodes.ImageTexture, [seq, position])
         from infinigen.terrain.utils import drive_param
+
         drive_param(foam.inputs["Frame"], 1, 0)
         if coastal:
             X = nw.new_node(Nodes.SeparateXYZ, [position0])

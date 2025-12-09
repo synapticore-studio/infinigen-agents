@@ -31,6 +31,24 @@ def geo_MOUNTAIN_general(
     position = nw.new_node("GeometryNodeInputPosition", [])
     normal = nw.new_node("GeometryNodeInputNormal", [])
 
+    # Custom Normals for enhanced mountain surface detail (Blender 4.5+)
+    # Deaktiviert wegen Geometry Nodes Kompatibilitätsproblemen
+    # if hasattr(Nodes, "SetMeshNormal"):
+    #     # Create custom normal calculation for mountain surface
+    #     mountain_normal = nw.new_node(
+    #         Nodes.VectorMath,
+    #         input_kwargs={0: normal, 1: nw.new_value(0.08, "mountain_normal_strength")},
+    #         attrs={"operation": "MULTIPLY"},
+    #     )
+    #     # Apply custom normals to geometry
+    #     set_normal = nw.new_node(
+    #         Nodes.SetMeshNormal,
+    #         input_kwargs={
+    #             "Geometry": nw.new_node(Nodes.GroupInput),
+    #             "Normal": mountain_normal.outputs["Vector"],
+    #         },
+    #     )
+
     noises = []
 
     for i in range(n_noise):

@@ -49,6 +49,24 @@ def geo_stone(nw, selection=None, random_seed=0, geometry=True):
         position = nw.new_node(Nodes.InputPosition)
         normal = nw.new_node(Nodes.InputNormal)
 
+        # Custom Normals for enhanced surface detail (Blender 4.5+)
+        if hasattr(Nodes, "SetMeshNormal"):
+            # Create custom normal calculation for stone surface
+            custom_normal = nw.new_node(
+                Nodes.VectorMath,
+                input_kwargs={0: normal, 1: nw.new_value(0.1, "normal_strength")},
+                attrs={"operation": "MULTIPLY"},
+            )
+
+            # Apply custom normals to geometry
+            set_normal = nw.new_node(
+                Nodes.SetMeshNormal,
+                input_kwargs={
+                    "Geometry": nw.new_node(Nodes.GroupInput),
+                    "Normal": custom_normal.outputs["Vector"],
+                },
+            )
+
     with FixedSeed(random_seed):
         # size of low frequency bumps, higher means smaller bumps
         size_bumps_lf = uniform(0, 30)

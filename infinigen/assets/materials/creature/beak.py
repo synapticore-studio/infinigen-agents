@@ -26,7 +26,7 @@ def black():
 
 
 def rand_color():
-    op = randint(0, 2)
+    op = randint(0, 2 + 1)
     return orange(), orange()
 
 

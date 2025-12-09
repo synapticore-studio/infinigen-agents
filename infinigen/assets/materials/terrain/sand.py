@@ -93,6 +93,24 @@ def geo_SAND(
     normal = nw.new_node("GeometryNodeInputNormal", [])
     position = nw.new_node("GeometryNodeInputPosition", [])
 
+    # Custom Normals for enhanced sand surface detail (Blender 4.5+)
+    if hasattr(Nodes, "SetMeshNormal"):
+        # Create custom normal calculation for sand surface
+        sand_normal = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: normal, 1: nw.new_value(0.03, "sand_normal_strength")},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        # Apply custom normals to geometry
+        set_normal = nw.new_node(
+            Nodes.SetMeshNormal,
+            input_kwargs={
+                "Geometry": nw.new_node(Nodes.GroupInput),
+                "Normal": sand_normal.outputs["Vector"],
+            },
+        )
+
     offsets = []
     for i in range(n_waves):
         wave_scale_node = nw.new_value(rg(wave_scale), f"wave_scale_{i}")

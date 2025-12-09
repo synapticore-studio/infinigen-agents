@@ -130,6 +130,7 @@ def lava_shader(nw):
         attrs={"voronoi_dimensions": "4D", "feature": "DISTANCE_TO_EDGE"},
     )
     from infinigen.terrain.utils import drive_param
+
     drive_param(voronoi_texture.inputs["W"], scale=0.003, offset=uniform(0, 10))
 
     colorramp_1 = nw.new_node(
@@ -152,6 +153,7 @@ def lava_shader(nw):
         attrs={"voronoi_dimensions": "4D", "feature": "DISTANCE_TO_EDGE"},
     )
     from infinigen.terrain.utils import drive_param
+
     drive_param(voronoi_texture_1.inputs["W"], scale=0.003, offset=uniform(0, 10))
 
     colorramp_2 = nw.new_node(
@@ -276,6 +278,24 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
         # normal = nw.new_node(Nodes.InputNormal)
         normal = Vector([0, 0, 1])
 
+        # Custom Normals for enhanced lava surface detail (Blender 4.5+)
+        if hasattr(Nodes, "SetMeshNormal"):
+            # Create custom normal calculation for lava surface
+            lava_normal = nw.new_node(
+                Nodes.VectorMath,
+                input_kwargs={0: normal, 1: nw.new_value(0.04, "lava_normal_strength")},
+                attrs={"operation": "MULTIPLY"},
+            )
+
+            # Apply custom normals to geometry
+            set_normal = nw.new_node(
+                Nodes.SetMeshNormal,
+                input_kwargs={
+                    "Geometry": nw.new_node(Nodes.GroupInput),
+                    "Normal": lava_normal.outputs["Vector"],
+                },
+            )
+
     with FixedSeed(random_seed):
         # scale wave
         wave_sca = nw.new_value(uniform(3.5, 4.5), "wave_sca")
@@ -290,6 +310,7 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
             attrs={"noise_dimensions": "4D"},
         )
         from infinigen.terrain.utils import drive_param
+
         drive_param(noise_texture_1.inputs["W"], 0.01)
 
         separate_xyz = nw.new_node(Nodes.SeparateXYZ, input_kwargs={"Vector": position})
@@ -301,9 +322,11 @@ def lava_geo(nw, selection=None, random_seed=0, geometry=True):
         group = nw.scalar_divide(nw.scalar_add(separate_xyz.outputs["Z"], 0), 20)
 
         group_2 = nw.new_node(
-            nodegroup_polynomial_geo().name
-            if nw.node_group.type != "SHADER"
-            else nodegroup_polynomial_shader().name,
+            (
+                nodegroup_polynomial_geo().name
+                if nw.node_group.type != "SHADER"
+                else nodegroup_polynomial_shader().name
+            ),
             input_kwargs={
                 "X": group_3,
                 "Y": group_4,

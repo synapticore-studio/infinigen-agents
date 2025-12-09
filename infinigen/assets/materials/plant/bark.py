@@ -7,10 +7,7 @@
 from numpy.random import normal as N
 from numpy.random import uniform as U
 
-from infinigen.assets.materials.utils.surface_utils import (
-    sample_color,
-    sample_ratio,
-)
+from infinigen.assets.materials.utils.surface_utils import sample_color, sample_ratio
 from infinigen.core import surface
 from infinigen.core.nodes.node_wrangler import Nodes, NodeWrangler
 
@@ -109,6 +106,26 @@ def geo_bark(nw: NodeWrangler):
     )
 
     position = nw.new_node(Nodes.InputPosition)
+
+    # Custom Normals for enhanced bark surface detail (Blender 4.5+)
+    if hasattr(Nodes, "SetMeshNormal"):
+        normal = nw.new_node(Nodes.InputNormal)
+
+        # Create custom normal calculation for bark surface
+        bark_normal = nw.new_node(
+            Nodes.VectorMath,
+            input_kwargs={0: normal, 1: nw.new_value(0.05, "bark_normal_strength")},
+            attrs={"operation": "MULTIPLY"},
+        )
+
+        # Apply custom normals to geometry
+        set_normal = nw.new_node(
+            Nodes.SetMeshNormal,
+            input_kwargs={
+                "Geometry": group_input.outputs["Geometry"],
+                "Normal": bark_normal.outputs["Vector"],
+            },
+        )
 
     value = nw.new_node(Nodes.Value)
     value.outputs[0].default_value = 5.0000

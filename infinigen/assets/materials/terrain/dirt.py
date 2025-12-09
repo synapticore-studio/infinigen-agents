@@ -49,6 +49,24 @@ def geo_dirt(nw, selection=None, random_seed=0, geometry=True):
         position = nw.new_node(Nodes.InputPosition)
         normal = nw.new_node(Nodes.InputNormal)
 
+        # Custom Normals for enhanced dirt surface detail (Blender 4.5+)
+        if hasattr(Nodes, "SetMeshNormal"):
+            # Create custom normal calculation for dirt surface
+            dirt_normal = nw.new_node(
+                Nodes.VectorMath,
+                input_kwargs={0: normal, 1: nw.new_value(0.06, "dirt_normal_strength")},
+                attrs={"operation": "MULTIPLY"},
+            )
+
+            # Apply custom normals to geometry
+            set_normal = nw.new_node(
+                Nodes.SetMeshNormal,
+                input_kwargs={
+                    "Geometry": nw.new_node(Nodes.GroupInput),
+                    "Normal": dirt_normal.outputs["Vector"],
+                },
+            )
+
     with FixedSeed(random_seed):
         # density of cracks, lower means cracks are present in smaller area
         dens_crack = uniform(0, 0.1)

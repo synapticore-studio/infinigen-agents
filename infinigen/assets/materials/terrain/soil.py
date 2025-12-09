@@ -226,6 +226,24 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
         position = nw.new_node(Nodes.InputPosition)
         normal = nw.new_node(Nodes.InputNormal)
 
+        # Custom Normals for enhanced soil surface detail (Blender 4.5+)
+        if hasattr(Nodes, "SetMeshNormal"):
+            # Create custom normal calculation for soil surface
+            soil_normal = nw.new_node(
+                Nodes.VectorMath,
+                input_kwargs={0: normal, 1: nw.new_value(0.05, "soil_normal_strength")},
+                attrs={"operation": "MULTIPLY"},
+            )
+
+            # Apply custom normals to geometry
+            set_normal = nw.new_node(
+                Nodes.SetMeshNormal,
+                input_kwargs={
+                    "Geometry": nw.new_node(Nodes.GroupInput),
+                    "Normal": soil_normal.outputs["Vector"],
+                },
+            )
+
     with FixedSeed(random_seed):
         # Code generated using version 2.3.1 of the node_transpiler
 
@@ -236,9 +254,11 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
         )
 
         group = nw.new_node(
-            nodegroup_pebble_geo().name
-            if nw.node_group.type != "SHADER"
-            else nodegroup_pebble_shader().name,
+            (
+                nodegroup_pebble_geo().name
+                if nw.node_group.type != "SHADER"
+                else nodegroup_pebble_shader().name
+            ),
             input_kwargs={"PebbleScale": peb1_size, "NoiseMag": peb1_noise_mag},
         )
 
@@ -273,9 +293,11 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
         )
 
         group_3 = nw.new_node(
-            nodegroup_pebble_geo().name
-            if nw.node_group.type != "SHADER"
-            else nodegroup_pebble_shader().name,
+            (
+                nodegroup_pebble_geo().name
+                if nw.node_group.type != "SHADER"
+                else nodegroup_pebble_shader().name
+            ),
             input_kwargs={"PebbleScale": peb2_size, "NoiseMag": peb2_noise_scale},
         )
 
@@ -318,9 +340,11 @@ def geometry_soil(nw, selection=None, random_seed=0, geometry=True):
         )
 
         group_2 = nw.new_node(
-            nodegroup_pebble_geo().name
-            if nw.node_group.type != "SHADER"
-            else nodegroup_pebble_shader().name,
+            (
+                nodegroup_pebble_geo().name
+                if nw.node_group.type != "SHADER"
+                else nodegroup_pebble_shader().name
+            ),
             input_kwargs={"PebbleScale": peb3_size, "NoiseMag": peb3_noise_scale},
         )
 

@@ -165,7 +165,7 @@ def sample_color(color, offset=0, keep_sum=False):
     if keep_sum:
         mean = (color[0] + color[1] + color[2]) / 3
         offset = min(mean, 1 - mean) * random.random()
-        idx = random.randint(0, 2)
+        idx = random.randint(0, 2 + 1)
         f = 1
         pcg = random.random()
         for i in range(3):

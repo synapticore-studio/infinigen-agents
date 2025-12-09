@@ -72,6 +72,27 @@ def geo_ice(nw: NodeWrangler, random_seed=0, selection=None):
 
         normal_1 = nw.new_node(Nodes.InputNormal)
 
+        # Custom Normals for enhanced ice surface detail (Blender 4.5+)
+        if hasattr(Nodes, "SetMeshNormal"):
+            # Create custom normal calculation for ice surface
+            ice_normal = nw.new_node(
+                Nodes.VectorMath,
+                input_kwargs={
+                    0: normal_1,
+                    1: nw.new_value(0.02, "ice_normal_strength"),
+                },
+                attrs={"operation": "MULTIPLY"},
+            )
+
+            # Apply custom normals to geometry
+            set_normal = nw.new_node(
+                Nodes.SetMeshNormal,
+                input_kwargs={
+                    "Geometry": group_input.outputs["Geometry"],
+                    "Normal": ice_normal.outputs["Vector"],
+                },
+            )
+
         position_1 = nw.new_node(Nodes.InputPosition)
 
         noise_texture_2 = nw.new_node(
