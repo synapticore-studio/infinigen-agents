@@ -56,11 +56,13 @@ dependencies = [
     # PyTorch dependencies moved to optional to avoid build issues
     # "torch>=2.0.0",
     # "torch-geometric>=2.4.0",
-    # "torch-scatter>=2.1.0", 
+    # "torch-scatter>=2.1.0",
     # "torch-sparse>=0.6.0",
     "kernels>=0.10.1",
     "overpy>=0.7",
     "requests>=2.32.4",
+    "gpytorch>=1.14",
+    "torch-geometric>=2.6.1",
 ]
 
 [project.optional-dependencies]

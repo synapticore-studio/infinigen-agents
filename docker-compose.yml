@@ -1,0 +1,122 @@
+# Docker Compose for Infinigen with GPU support - Windows Optimized
+
+services:
+  infinigen:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: infinigen:latest
+    container_name: infinigen-gpu
+    restart: unless-stopped
+    
+    # GPU support configuration for Windows
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility]
+    
+    # Environment variables optimized for Windows
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - PYTHONPATH=/app
+      - UV_CACHE_DIR=/tmp/.uv-cache
+      - DISPLAY=:99
+      - BLENDER_HEADLESS=1
+      - CUDA_VISIBLE_DEVICES=0
+      - OMP_NUM_THREADS=4
+    
+    # Volume mounts optimized for Windows
+    volumes:
+      - .:/app:rw
+      - infinigen-data:/app/data
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro  # X11 for headless Blender
+      - /app/.venv  # Exclude Windows .venv from mount
+    
+    # Networking optimized for Windows
+    ports:
+      - "8080:8080"
+      - "8082:8082"  # MCP Server port
+    
+    # Interactive terminal
+    stdin_open: true
+    tty: true
+    
+    # Working directory
+    working_dir: /app
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import infinigen; print('Infinigen loaded successfully')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MCP Server service - lightweight version for MCP operations
+  infinigen-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infinigen-mcp-server
+    restart: unless-stopped
+
+    # GPU support for MCP operations
+    runtime: nvidia
+    gpus: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility]
+
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - PYTHONPATH=/app
+      - UV_CACHE_DIR=/tmp/.uv-cache
+      - DISPLAY=:99
+      - BLENDER_HEADLESS=1
+      - CUDA_VISIBLE_DEVICES=0
+
+    volumes:
+      - .:/app:rw
+      - infinigen-data:/app/data
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - /app/.venv  # Keep image venv, don't overwrite with host
+
+    ports:
+      - "8082:8080"  # MCP Server port (streamable-http)
+
+    working_dir: /app
+    command: ["/usr/local/bin/start-mcp-server.sh"]
+
+    # Health check for MCP server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Development service with additional mounts
+  infinigen-dev:
+    extends: infinigen
+    container_name: infinigen-dev
+    volumes:
+      - .:/app:rw
+      - infinigen-data:/app/data
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ./logs:/app/logs:rw
+    ports:
+      - "8081:8080"  # Different port to avoid conflict
+      - "8888:8888"  # Jupyter notebook port
+
+volumes:
+  infinigen-data:
+    driver: local 
