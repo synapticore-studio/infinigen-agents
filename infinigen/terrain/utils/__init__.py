@@ -41,11 +41,9 @@ from .kernelizer_util import (
 )
 from .logging import Timer
 from .mesh import Mesh, Vars, move_modifier, write_attributes
+from infinigen.core.util.random import random_int, random_int_large, random_nat
 from .random import (
     chance,
     drive_param,
     perlin_noise,
-    random_int,
-    random_int_large,
-    random_nat,
 )

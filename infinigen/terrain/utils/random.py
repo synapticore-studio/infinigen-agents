@@ -4,26 +4,14 @@
 # Authors: Zeyu Ma
 
 
-import random
 from ctypes import POINTER, c_float, c_int32, c_size_t
 
 import bpy
 import numpy as np
 from numpy import ascontiguousarray as AC
 
+from infinigen.core.util.random import random_int, random_int_large, random_nat
 from .ctype_util import ASFLOAT, load_cdll
-
-
-def random_int():
-    return np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
-
-
-def random_nat():
-    return np.random.randint(1, np.iinfo(np.int32).max)
-
-
-def random_int_large():
-    return random.getrandbits(128)
 
 
 def chance(x):

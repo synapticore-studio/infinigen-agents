@@ -11,6 +11,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument("input_folder", type=Path, nargs="+")
 parser.add_argument("--output_folder", type=Path, default=None)
+parser.add_argument("--output_base", type=Path, default=Path("outputs"))
 parser.add_argument("--image_type", default="Image")
 parser.add_argument("--camera", type=int, default=0)
 parser.add_argument("--overlay", type=int, default=1)
@@ -24,10 +25,11 @@ for input_folder in args.input_folder:
         continue
 
     if args.output_folder is None:
-        output_folder = input_folder
+        output_folder = args.output_base / input_folder.name
+        output_folder.mkdir(parents=True, exist_ok=True)
     else:
         output_folder = args.output_folder
-        output_folder.mkdir()
+        output_folder.mkdir(parents=True, exist_ok=True)
 
     for seed_folder in input_folder.iterdir():
         if not seed_folder.is_dir():
