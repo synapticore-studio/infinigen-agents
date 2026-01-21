@@ -1,9 +1,8 @@
 # Addon Manager Agent - For managing Blender addons and extensions
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-from pydantic import BaseModel
-from pydantic_ai import Agent
+from pydantic_ai import Agent, RunContext
 
 from config.model_factory import get_model
 from deps.blender_deps import BlenderConnectionDep
@@ -11,18 +10,24 @@ from tools.blender_tools import BlenderOpsDep
 
 logger = logging.getLogger(__name__)
 
+# Define dependencies type for the agent
+class AddonManagerDeps:
+    """Dependencies for the Addon Manager Agent"""
+    def __init__(
+        self,
+        blender_ops: BlenderOpsDep,
+        blender_conn: BlenderConnectionDep,
+    ):
+        self.blender_ops = blender_ops
+        self.blender_conn = blender_conn
 
-class AddonManagerAgent(BaseModel):
-    """AI Agent for managing Blender addons and extensions"""
 
-    def __init__(self, **data):
-        super().__init__(**data)
-
-        # Create Pydantic-AI agent with configured model
-        self.agent = Agent(
-            get_model(),
-            result_type=Dict,
-            system_prompt="""You are an expert Blender addon manager. Your responsibilities include:
+# Create the Agent directly using pydantic-ai patterns
+addon_manager_agent = Agent(
+    get_model(),
+    result_type=Dict,
+    deps_type=AddonManagerDeps,
+    system_prompt="""You are an expert Blender addon manager. Your responsibilities include:
 
 1. **Addon Installation & Management**: Install, enable, disable, and configure Blender addons
 2. **Dependency Resolution**: Ensure all addon dependencies are properly installed
@@ -49,61 +54,78 @@ class AddonManagerAgent(BaseModel):
 - Always provide fallback options when possible
 
 You have access to comprehensive addon management tools and can handle both online and offline installation methods.""",
-        )
+)
 
-    async def install_addon(
-        self,
-        addon_name: str,
-        blender_ops: BlenderOpsDep,
-        blender_conn: BlenderConnectionDep,
-    ) -> Dict:
-        """Install a Blender addon"""
-        try:
-            if not blender_conn.is_connected:
-                return {
-                    "success": False,
-                    "message": "Blender not connected",
-                    "error": "No Blender connection available",
-                }
 
-            # Use BlenderOps to install addon
-            result = blender_ops.install_addon(addon_name)
-
-            return {
-                "success": result,
-                "message": f"Addon {addon_name} installation {'succeeded' if result else 'failed'}",
-                "addon_name": addon_name,
-            }
-
-        except Exception as e:
-            logger.error(f"Error installing addon {addon_name}: {e}")
+@addon_manager_agent.tool
+async def install_addon(
+    ctx: RunContext[AddonManagerDeps],
+    addon_name: str,
+) -> Dict:
+    """Install a Blender addon
+    
+    Args:
+        ctx: The run context with dependencies
+        addon_name: Name of the addon to install
+        
+    Returns:
+        Dictionary with installation status and details
+    """
+    try:
+        if not ctx.deps.blender_conn.is_connected:
             return {
                 "success": False,
-                "message": f"Error installing addon {addon_name}",
+                "message": "Blender not connected",
+                "error": "No Blender connection available",
+            }
+
+        # Use BlenderOps to install addon
+        result = ctx.deps.blender_ops.install_addon(addon_name)
+
+        return {
+            "success": result,
+            "message": f"Addon {addon_name} installation {'succeeded' if result else 'failed'}",
+            "addon_name": addon_name,
+        }
+
+    except Exception as e:
+        logger.error(f"Error installing addon {addon_name}: {e}")
+        return {
+            "success": False,
+            "message": f"Error installing addon {addon_name}",
+            "error": str(e),
+        }
+
+
+@addon_manager_agent.tool
+async def setup_required_addons(
+    ctx: RunContext[AddonManagerDeps],
+) -> Dict[str, Dict]:
+    """Setup all required addons for Infinigen
+    
+    Args:
+        ctx: The run context with dependencies
+        
+    Returns:
+        Dictionary mapping addon names to their installation results
+    """
+    required_addons = ["real_snow", "flip_fluids", "ant_landscape"]
+    results = {}
+
+    for addon_name in required_addons:
+        try:
+            result = await install_addon(ctx, addon_name)
+            results[addon_name] = result
+
+            if not result["success"]:
+                logger.warning(f"Failed to setup required addon: {addon_name}")
+
+        except Exception as e:
+            logger.error(f"Error setting up addon {addon_name}: {e}")
+            results[addon_name] = {
+                "success": False,
+                "message": f"Error setting up addon {addon_name}",
                 "error": str(e),
             }
 
-    async def setup_required_addons(
-        self, blender_ops: BlenderOpsDep, blender_conn: BlenderConnectionDep
-    ) -> Dict[str, Dict]:
-        """Setup all required addons for Infinigen"""
-        required_addons = ["real_snow", "flip_fluids", "ant_landscape"]
-        results = {}
-
-        for addon_name in required_addons:
-            try:
-                result = await self.install_addon(addon_name, blender_ops, blender_conn)
-                results[addon_name] = result
-
-                if not result["success"]:
-                    logger.warning(f"Failed to setup required addon: {addon_name}")
-
-            except Exception as e:
-                logger.error(f"Error setting up addon {addon_name}: {e}")
-                results[addon_name] = {
-                    "success": False,
-                    "message": f"Error setting up addon {addon_name}",
-                    "error": str(e),
-                }
-
-        return results
+    return results
