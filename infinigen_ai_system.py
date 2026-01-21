@@ -3,6 +3,10 @@
 Infinigen AI System
 Coordinated AI agents for procedural generation with Infinigen
 
+NOTE: This file needs to be updated to work with the new agent pattern.
+Agents are now pydantic-ai Agent instances, not classes.
+They should be used with agent.run() or agent.run_sync() with dependencies.
+
 This system provides specialized AI agents for different aspects of Infinigen:
 - Scene Composition
 - Asset Generation
