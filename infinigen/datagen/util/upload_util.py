@@ -69,13 +69,18 @@ def apply_manifest_cleanup(scene_folder, manifest):
 
     keep = set()
     delete = set()
+    glob_cache = {}
 
     for glob, action in manifest:
-        affected = set()
-        for p in scene_folder.glob(glob):
-            affected.add(p)
-            if p.is_dir():
-                affected |= set(p.rglob("*"))
+        if glob in glob_cache:
+            affected = set(glob_cache[glob])
+        else:
+            affected = set()
+            for p in scene_folder.glob(glob):
+                affected.add(p)
+                if p.is_dir():
+                    affected |= set(p.rglob("*"))
+            glob_cache[glob] = list(affected)
 
         print(f"{glob=} {action=} matched {len(affected)=}")
 

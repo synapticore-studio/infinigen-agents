@@ -6,6 +6,7 @@
 
 import colorsys
 import json
+import random
 
 import mathutils
 import numpy as np
@@ -53,6 +54,18 @@ def sample_json_palette(pallette_name, n_sample=1):
     if n_sample == 1:
         return color
     return color_samples
+
+
+def random_int():
+    return np.random.randint(np.iinfo(np.int32).min, np.iinfo(np.int32).max)
+
+
+def random_nat():
+    return np.random.randint(1, np.iinfo(np.int32).max)
+
+
+def random_int_large():
+    return random.getrandbits(128)
 
 
 def random_general(var):

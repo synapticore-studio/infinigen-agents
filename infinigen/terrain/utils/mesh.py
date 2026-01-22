@@ -27,38 +27,31 @@ class NormalMode:
     AngleWeighted = "angle_weighted"
 
 
-def object_to_vertex_attributes(obj, specified=None, skip_internal=True):
-    vertex_attributes = {}
+def _object_attributes(obj, domain, count, specified=None, skip_internal=True):
+    attributes = {}
     for attr in obj.data.attributes.keys():
         if skip_internal and butil.blender_internal_attr(attr):
             continue
         if (
             (specified is None) or (specified is not None and attr in specified)
-        ) and obj.data.attributes[attr].domain == "POINT":
+        ) and obj.data.attributes[attr].domain == domain:
             type_key = obj.data.attributes[attr].data_type
-            tmp = np.zeros(
-                len(obj.data.vertices) * ATTRTYPE_DIMS[type_key], dtype=np.float32
-            )
+            tmp = np.zeros(count * ATTRTYPE_DIMS[type_key], dtype=np.float32)
             obj.data.attributes[attr].data.foreach_get(ATTRTYPE_FIELDS[type_key], tmp)
-            vertex_attributes[attr] = tmp.reshape((len(obj.data.vertices), -1))
-    return vertex_attributes
+            attributes[attr] = tmp.reshape((count, -1))
+    return attributes
+
+
+def object_to_vertex_attributes(obj, specified=None, skip_internal=True):
+    return _object_attributes(
+        obj, "POINT", len(obj.data.vertices), specified, skip_internal
+    )
 
 
 def object_to_face_attributes(obj, specified=None, skip_internal=True):
-    face_attributes = {}
-    for attr in obj.data.attributes.keys():
-        if skip_internal and butil.blender_internal_attr(attr):
-            continue
-        if (
-            (specified is None) or (specified is not None and attr in specified)
-        ) and obj.data.attributes[attr].domain == "FACE":
-            type_key = obj.data.attributes[attr].data_type
-            tmp = np.zeros(
-                len(obj.data.polygons) * ATTRTYPE_DIMS[type_key], dtype=np.float32
-            )
-            obj.data.attributes[attr].data.foreach_get(ATTRTYPE_FIELDS[type_key], tmp)
-            face_attributes[attr] = tmp.reshape((len(obj.data.polygons), -1))
-    return face_attributes
+    return _object_attributes(
+        obj, "FACE", len(obj.data.polygons), specified, skip_internal
+    )
 
 
 def objectdata_from_VF(vertices, faces):

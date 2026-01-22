@@ -1005,6 +1005,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_folder", type=Path)
+    parser.add_argument("--output_base", type=Path, default=Path("outputs"))
     parser.add_argument("--input_folder", type=Path, default=None)
     parser.add_argument(
         "-s", "--seed", default=None, help="The seed used to generate the scene"
@@ -1055,4 +1056,6 @@ if __name__ == "__main__":
             if len(args.debug) == 0 or any(name.endswith(x) for x in args.debug):
                 logging.getLogger(name).setLevel(logging.DEBUG)
 
+    if args.output_folder is None:
+        args.output_folder = args.output_base
     main(args)

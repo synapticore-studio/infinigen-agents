@@ -831,6 +831,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-o", "--output_folder", type=Path, default=None)  #
+    parser.add_argument("--output_base", type=Path, default=Path("outputs"))
     parser.add_argument(
         "--num_scenes",
         type=int,
@@ -947,10 +948,10 @@ if __name__ == "__main__":
         date_str = datetime.now().strftime("%y-%m-%d_%H-%M")
         hostname = os.uname().nodename
 
-        output_base = Path("outputs")
+        output_base = args.output_base
         assert output_base.exists(), output_base
 
-        args.output_folder = Path(f"outputs/{date_str}_{hostname}")
+        args.output_folder = output_base / f"{date_str}_{hostname}"
 
     overwrite_ok = args.use_existing or args.overwrite
     if args.output_folder.exists() and not overwrite_ok:
