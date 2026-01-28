@@ -74,7 +74,7 @@ terrain = [
 pytorch = [
     "torch>=2.0.0",
     "torch-geometric>=2.4.0",
-    "torch-scatter>=2.1.0", 
+    "torch-scatter>=2.1.0",
     "torch-sparse>=0.6.0"
 ]
 vis = [
@@ -121,6 +121,9 @@ exclude = [
     "datagen/customgt/build/customgt",
     "assets/objects/creatures/parts/nurbs_data/*.npy",
 ]
+
+[project.scripts]
+infinigen-agent = "infinigen.agents.cli:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "infinigen.__version__"}
