@@ -93,3 +93,9 @@ sim_testing/
 *.log
 
 *tmp*
+# Database files
+*.db
+*.duckdb
+
+# Claude Code config (optional - keep local)
+# .claude/
