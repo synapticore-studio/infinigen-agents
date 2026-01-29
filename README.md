@@ -154,9 +154,14 @@ Please see our [project roadmap](https://infinigen.org/roadmap) and follow us at
 ## Contributing
 
 We welcome contributions! You can contribute in many ways:
-- **Contribute code to this repository** - We welcome code contributions. More guidelines coming soon.
-- **Contribute procedural generators** - `infinigen/nodes/node_transpiler/dev_script.py` provides tools to convert artist-friendly [Blender Nodes](https://docs.blender.org/manual/en/2.79/render/blender_render/materials/nodes/introduction.html) into python code. Tutorials and guidelines coming soon.
+- **Contribute code to this repository** - See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on setup, development workflow, testing, and code standards.
+- **Contribute procedural generators** - `infinigen/nodes/node_transpiler/dev_script.py` provides tools to convert artist-friendly [Blender Nodes](https://docs.blender.org/manual/en/2.79/render/blender_render/materials/nodes/introduction.html) into python code. See [docs/ImplementingAssets.md](docs/ImplementingAssets.md) for more details.
 - **Contribute pre-generated data** - Anyone can contribute their computing power to create data and share it with the community. Please stay tuned for a repository of pre-generated data.
+
+For contributors using **GitHub Copilot**, we provide:
+- Repository-level instructions in [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
+- Onboarding prompt in [`.github/prompts/onboarding-plan.prompt.md`](.github/prompts/onboarding-plan.prompt.md) (invoke with `/onboarding-plan`)
+- MCP server setup guide in [`.github/MCP_SETUP_GUIDE.md`](.github/MCP_SETUP_GUIDE.md) for enhanced Copilot capabilities
 
 ### Getting Help
 
