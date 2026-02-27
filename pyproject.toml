@@ -49,9 +49,9 @@ dependencies = [
     "kaleido>=1.0.0",
     "bpy>=4.5.3",
     "mcp>=1.13.1",
-    "pydantic-ai[huggingface]>=1.0.8",
+    "pydantic-ai>=1.0.8",
     "pydantic-graph>=0.1.0",
-    "duckdb[extensions]>=1.4.0",
+    "duckdb>=1.4.0",
     "sentence-transformers>=5.1.0",
     # PyTorch dependencies moved to optional to avoid build issues
     # "torch>=2.0.0",
