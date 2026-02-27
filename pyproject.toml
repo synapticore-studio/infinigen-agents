@@ -40,14 +40,14 @@ dependencies = [
     "rtree",
     # Advanced features - all working on Windows
     "scikit-image>=0.25.0", # Newer version with pre-compiled wheels
-    "scikit-learn<1.4.0", # Updated to latest Blender version
+    "scikit-learn>=1.5.0",
     "coacd",
     # Modern visualization - replacing matplotlib
     "plotly>=6.2.0",
     "altair>=5.5.0",
     "pillow>=10.0.0",
     "kaleido>=1.0.0",
-    "bpy>=4.5.3",
+    "bpy>=5.0.0",
     "mcp>=1.13.1",
     "pydantic-ai>=1.0.8",
     "pydantic-graph>=0.1.0",
