@@ -15,9 +15,9 @@ coverage.xml
 */rclone.zip
 */miniconda.sh
 
-.vscode
+.vscode/*
+!.vscode/mcp.json
 */wandb
-.vscode
 
 slurm-*.out
 __pycache__
